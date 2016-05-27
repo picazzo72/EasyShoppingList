@@ -15,7 +15,7 @@ public class ShoppingContract {
     // relationship between a domain name and its website.  A convenient string to use for the
     // content authority is the package name for the app, which is guaranteed to be unique on the
     // device.
-    public static final String CONTENT_AUTHORITY = BuildConfig.APPLICATION_ID;
+    public static final String CONTENT_AUTHORITY = "com.dandersen.app.easyshoppinglist";
 
     // Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
     // the content provider.
@@ -26,6 +26,7 @@ public class ShoppingContract {
     // looking at meter data. content://com.dandersen.meterreader/givemeroot/ will fail,
     // as the ContentProvider hasn't been given any information on what to do with "givemeroot".
     public static final String PATH_SHOPPING_LIST = "shoppinglist";
+    public static final String PATH_CATEGORY = "category";
     public static final String PATH_PRODUCT = "product";
     public static final String PATH_SHOP = "shop";
     public static final String PATH_SHOPPING_LIST_PRODUCTS = "shoppinglistproducts";
@@ -63,7 +64,31 @@ public class ShoppingContract {
         // Note
         public static final String COLUMN_NOTE = "note";
 
-        public static Uri buildMeterUri(long id) {
+        public static Uri buildShoppingListUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
+    public static final class CategoryEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_CATEGORY).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_CATEGORY;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_CATEGORY;
+
+        // Table name
+        public static final String TABLE_NAME = PATH_CATEGORY;
+
+        // Name
+        public static final String COLUMN_NAME = "name";
+
+        // Description
+        public static final String COLUMN_DESCRIPTION = "description";
+
+        public static Uri buildCategoryUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
@@ -84,14 +109,31 @@ public class ShoppingContract {
         // Name
         public static final String COLUMN_NAME = "name";
 
+        // Category
+        public static final String COLUMN_CATEGORY_ID = "category_id";
+
+        // Favorite - boolean (0 or 1)
+        public static final String COLUMN_FAVORITE = "favorite";
+
+        // Custom product (user defined) - boolean (0 or 1)
+        public static final String COLUMN_CUSTOM = "custom";
+
         // Date, stored as long in milliseconds since the epoch
         public static final String COLUMN_LAST_USED = "last_used";
 
         // Use count
         public static final String COLUMN_USE_COUNT = "use_count";
 
-        public static Uri buildMeterUri(long id) {
+        public static Uri buildProductCategory(String category) {
+            return CONTENT_URI.buildUpon().appendPath(category).build();
+        }
+
+        public static Uri buildProductUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static String getCategoryFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
         }
     }
 
@@ -126,7 +168,7 @@ public class ShoppingContract {
         // Homepage
         public static final String COLUMN_HOMEPAGE = "homepage";
 
-        public static Uri buildMeterUri(long id) {
+        public static Uri buildShopUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
@@ -153,7 +195,10 @@ public class ShoppingContract {
         // Shop id
         public static final String COLUMN_SHOP_ID = "shop_id";
 
-        public static Uri buildMeterUri(long id) {
+        // Sort order
+        public static final String COLUMN_SORT_ORDER = "sort_order";
+
+        public static Uri buildShoppingListProductsUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }

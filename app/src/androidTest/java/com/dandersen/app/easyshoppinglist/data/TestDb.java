@@ -42,6 +42,7 @@ public class TestDb extends AndroidTestCase {
         // Android metadata (db version information)
         final HashSet<String> tableNameHashSet = new HashSet<String>();
         tableNameHashSet.add(ShoppingContract.ShoppingListEntry.TABLE_NAME);
+        tableNameHashSet.add(ShoppingContract.CategoryEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ProductEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ShopEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME);
@@ -62,7 +63,7 @@ public class TestDb extends AndroidTestCase {
         } while( c.moveToNext() );
 
         // check that all tables are created
-        assertTrue("Error: Your database was created without one or more of the four required tables",
+        assertTrue("Error: Your database was created without one or more of the required tables",
                 tableNameHashSet.isEmpty());
 
         {
@@ -93,6 +94,32 @@ public class TestDb extends AndroidTestCase {
         }
 
         {
+            c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.CategoryEntry.TABLE_NAME + ")",
+                    null);
+
+            assertTrue("Error: This means that we were unable to query the database for category table information.",
+                    c.moveToFirst());
+
+            // Build a HashSet of all of the column names we want to look for
+            final HashSet<String> columnHashSet = new HashSet<String>();
+            columnHashSet.add(ShoppingContract.CategoryEntry._ID);
+            columnHashSet.add(ShoppingContract.CategoryEntry.COLUMN_NAME);
+            columnHashSet.add(ShoppingContract.CategoryEntry.COLUMN_DESCRIPTION);
+
+            int columnNameIndex = c.getColumnIndex("name");
+
+            do {
+                String columnName = c.getString(columnNameIndex);
+                columnHashSet.remove(columnName);
+            } while (c.moveToNext());
+
+            // if this fails, it means that your database doesn't contain all of the required location
+            // entry columns
+            assertTrue("Error: The database doesn't contain all of the required category entry columns",
+                    columnHashSet.isEmpty());
+        }
+
+        {
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ProductEntry.TABLE_NAME + ")",
                     null);
 
@@ -103,6 +130,9 @@ public class TestDb extends AndroidTestCase {
             final HashSet<String> columnHashSet = new HashSet<String>();
             columnHashSet.add(ShoppingContract.ProductEntry._ID);
             columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_NAME);
+            columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID);
+            columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_FAVORITE);
+            columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_CUSTOM);
             columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_LAST_USED);
             columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_USE_COUNT);
 
@@ -162,6 +192,7 @@ public class TestDb extends AndroidTestCase {
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_PRODUCT_ID);
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOPPING_LIST_ID);
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOP_ID);
+            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SORT_ORDER);
 
             int columnNameIndex = c.getColumnIndex("name");
 
@@ -222,9 +253,55 @@ public class TestDb extends AndroidTestCase {
         db.close();
     }
 
-    private long insertProduct(SQLiteDatabase db) {
+    private long insertCategory(SQLiteDatabase db) {
         // Create ContentValues of what you want to insert
-        ContentValues contentValues = TestUtilities.createDairyProductValues();
+        ContentValues contentValues = TestUtilities.createDairyCategoryValues();
+
+        // Insert ContentValues into database and get a row ID back
+        long rowId = db.insert(ShoppingContract.CategoryEntry.TABLE_NAME, null, contentValues);
+        assertTrue("Error: Database insert of category row failed: " + Long.toString(rowId), rowId > 0);
+
+        // Query the database and receive a Cursor back
+        Cursor c = db.query(ShoppingContract.CategoryEntry.TABLE_NAME,
+                null,
+                ShoppingContract.CategoryEntry._ID + " = ?",
+                new String[]{ Long.toString(rowId) },
+                null, null,
+                null);
+
+        // Move the cursor to a valid database row
+        assertTrue("Error: No records returned from category query", c.moveToFirst());
+
+        // Validate data in resulting Cursor with the original ContentValues
+        TestUtilities.validateCurrentRecord("Error: Category values are not correct", c, contentValues);
+
+        // Finally, close the cursor
+        c.close();
+
+        return rowId;
+    }
+
+    /*
+        Test that we can insert and query the category table.
+    */
+    public void testCategoryTable() {
+        // First step: Get reference to writable database
+        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        assertEquals(true, db.isOpen());
+
+        // Insert ContentValues into database and get a row ID back
+        insertCategory(db);
+
+        // Finally, close the database
+        db.close();
+    }
+
+    private long insertProduct(SQLiteDatabase db) {
+        // Insert product into database and get a row ID back
+        long categoryId = insertCategory(db);
+
+        // Create ContentValues of what you want to insert
+        ContentValues contentValues = TestUtilities.createDairyProductValues(categoryId);
 
         // Insert ContentValues into database and get a row ID back
         long rowId = db.insert(ShoppingContract.ProductEntry.TABLE_NAME, null, contentValues);
