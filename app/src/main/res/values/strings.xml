@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">EasyShoppingList</string>
+
+    // Button names
+    <string name="button_current_list">To Buy</string>
+    <string name="button_shopping_lists">Shopping Lists</string>
+    <string name="button_categories">Categories</string>
+    <string name="button_products">Products</string>
+    <string name="button_shop">Shops</string>
 </resources>

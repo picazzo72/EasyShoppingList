@@ -67,6 +67,10 @@ public class ShoppingContract {
         public static Uri buildShoppingListUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+        public static Uri buildShoppingListActiveUri() {
+            return CONTENT_URI.buildUpon().appendPath("active").build();
+        }
     }
 
     public static final class CategoryEntry implements BaseColumns {
