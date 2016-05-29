@@ -51,6 +51,11 @@ public class TestProvider extends AndroidTestCase {
                 null,
                 null
         );
+        mContext.getContentResolver().delete(
+                ShoppingContract.ShoppingListProductsEntry.CONTENT_URI,
+                null,
+                null
+        );
 
         Cursor cursor = mContext.getContentResolver().query(
                 ShoppingContract.ProductEntry.CONTENT_URI,

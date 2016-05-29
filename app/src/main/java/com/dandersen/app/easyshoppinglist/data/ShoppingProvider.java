@@ -30,6 +30,7 @@ public class ShoppingProvider extends ContentProvider {
     static final int SHOPPING_LIST = 300;           // Shopping lists
     static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
     static final int SHOP = 400;                    // Shop list
+    static final int SHOPPING_LIST_PRODUCTS = 500;  // Shopping list/products/shop rel table
 
     private static final SQLiteQueryBuilder sProductByCategoryQueryBuilder;
 
@@ -72,6 +73,8 @@ public class ShoppingProvider extends ContentProvider {
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
 
+        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCTS, SHOPPING_LIST_PRODUCTS);
+
         // Return the new matcher!
         return matcher;
     }
@@ -108,6 +111,8 @@ public class ShoppingProvider extends ContentProvider {
                 return ShoppingContract.ShoppingListEntry.CONTENT_TYPE;
             case SHOP:
                 return ShoppingContract.ShopEntry.CONTENT_TYPE;
+            case SHOPPING_LIST_PRODUCTS:
+                return ShoppingContract.ShoppingListProductsEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -195,6 +200,21 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getShoppingListProducts(
+            String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        Log.v(LOG_TAG, "DSA LOG - Shopping list products rel");
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.ShoppingListProductsEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
                         String sortOrder) {
@@ -235,6 +255,11 @@ public class ShoppingProvider extends ContentProvider {
             case SHOP:
             {
                 retCursor = getShopList(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+            case SHOPPING_LIST_PRODUCTS:
+            {
+                retCursor = getShoppingListProducts(projection, selection, selectionArgs, sortOrder);
                 break;
             }
             default:
@@ -290,6 +315,15 @@ public class ShoppingProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
+            case SHOPPING_LIST_PRODUCTS:
+            {
+                long _id = db.insert(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = ShoppingContract.ShoppingListProductsEntry.buildShoppingListProductsUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -327,6 +361,11 @@ public class ShoppingProvider extends ContentProvider {
                 case SHOP:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShopEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
+                }
+                case SHOPPING_LIST_PRODUCTS:
+                {
+                    numberOfDeletedRows = db.delete(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
                 default:
@@ -378,6 +417,11 @@ public class ShoppingProvider extends ContentProvider {
                 case SHOP:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopEntry.TABLE_NAME, values, selection, selectionArgs);
+                    break;
+                }
+                case SHOPPING_LIST_PRODUCTS:
+                {
+                    numberOfUpdatedRows = db.update(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
                 default:
