@@ -1,15 +1,15 @@
 package com.dandersen.app.easyshoppinglist;
 
 import android.net.Uri;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
-import com.dandersen.app.easyshoppinglist.data.ShoppingProvider;
-
 public class MainActivity extends AppCompatActivity
-        implements ButtonFragment.Callback {
+        implements ButtonFragment.Callback, CategoryFragment.Callback {
+
+    private boolean mTwoPane = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,5 +73,30 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onCurrentListBtn(View view) {
 
+    }
+
+    @Override
+    public void onCategoryItemSelected(Uri uri) {
+        Bundle arguments = new Bundle();
+        arguments.putParcelable(ProductFragment.PRODUCT_FRAGMENT_URI, uri);
+
+        ProductFragment productFragment = new ProductFragment();
+        productFragment.setArguments(arguments);
+
+        if (mTwoPane) {
+            // In two-pane mode show the detail view in this activity by adding
+            // or replacing the detail fragment using a fragment transaction
+
+            // TODO
+//            getSupportFragmentManager().beginTransaction()
+//                    .replace(R.id.weather_detail_container, detailFragment, DETAILFRAGMENT_TAG)
+//                    .commit();
+        }
+        else {
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, productFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+        }
     }
 }

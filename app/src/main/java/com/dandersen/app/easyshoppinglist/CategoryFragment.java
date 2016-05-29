@@ -51,7 +51,7 @@ public class CategoryFragment extends Fragment
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
             ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry._ID,
-            ShoppingContract.CategoryEntry.COLUMN_NAME
+            ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry.COLUMN_NAME
     };
 
     // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
@@ -67,9 +67,9 @@ public class CategoryFragment extends Fragment
      */
     public interface Callback {
         /**
-         * DetailFragmentCallback for when an item has been selected.
+         * CategoryFragmentCallback for when an item has been selected.
          */
-        public void onItemSelected(Uri dateUri);
+        public void onCategoryItemSelected(Uri uri);
     }
 
 
@@ -197,23 +197,23 @@ public class CategoryFragment extends Fragment
         mListView = (ListView)rootView.findViewById(R.id.listview_categories);
         mListView.setAdapter(mCategoryAdapter);
 
-//        // Create on item click listener for the ListView
-//        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
-//                // CursorAdapter returns a cursor at the correct position for getItem(), or null
-//                // if it cannot seek to that position.
-//                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
-//                if (c != null) {
-//                    String locationSetting = Utility.getPreferredLocation(getActivity());
-//                    Callback cb = (Callback) getActivity();
-//                    cb.onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-//                            locationSetting, c.getLong(COL_WEATHER_DATE)
-//                    ));
-//                }
-//                mPosition = position;
-//            }
-//        });
+        // Create on item click listener for the ListView
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
+                // CursorAdapter returns a cursor at the correct position for getItem(), or null
+                // if it cannot seek to that position.
+                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
+                if (c != null) {
+                    Callback cb = (Callback) getActivity();
+                    String category = c.getString(COL_CATEGORY_NAME);
+                    cb.onCategoryItemSelected(ShoppingContract.ProductEntry.buildProductCategory(
+                            category
+                    ));
+                }
+                mPosition = position;
+            }
+        });
 
         // If there's instance state, mine it for useful information.
         // The end-goal here is that the user never knows that turning their device sideways

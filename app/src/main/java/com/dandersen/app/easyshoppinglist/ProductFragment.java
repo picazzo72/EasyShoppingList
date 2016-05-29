@@ -21,6 +21,8 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 public class ProductFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private final String LOG_TAG = ProductFragment.class.getSimpleName();
+
     private ProductAdapter mProductAdapter;
 
     private boolean mTwoPaneLayout = false;
@@ -34,9 +36,13 @@ public class ProductFragment extends Fragment
     // Tag for save instance bundle
     private static final String SELECTED_KEY = "selected_position";
 
-    private final String LOG_TAG = ProductFragment.class.getSimpleName();
+    // Tag for saving the URI for the product fragment in single pane (phone) mode
+    static final String PRODUCT_FRAGMENT_URI = "URI";
 
     private static final int CURSOR_LOADER_ID = 0;
+
+    // The Uri from caller, or by default all products Uri
+    private Uri mUri;
 
     private boolean mRestartingLoader = false;
 
@@ -50,7 +56,7 @@ public class ProductFragment extends Fragment
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
             ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
-            ShoppingContract.ProductEntry.COLUMN_NAME
+            ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry.COLUMN_NAME
     };
 
     // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
@@ -87,6 +93,64 @@ public class ProductFragment extends Fragment
         super.onCreate(savedInstanceState);
         // The following line makes this fragment handle menu events
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Get Uri from the arguments sent from the caller
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mUri = arguments.getParcelable(ProductFragment.PRODUCT_FRAGMENT_URI);
+        }
+        else {
+            mUri = ShoppingContract.ProductEntry.CONTENT_URI;
+        }
+
+        // The CursorAdapter will take data from a source and
+        // use it to populate the ListView it's attached to
+        mProductAdapter = new ProductAdapter(getActivity(), null, 0);
+        mProductAdapter.setTwoPaneLayout(mTwoPaneLayout);
+
+        View rootView = inflater.inflate(R.layout.fragment_product, container, false);
+
+        // Get a reference to the ListView, and attach this adapter to it
+        mListView = (ListView)rootView.findViewById(R.id.listview_products);
+        mListView.setAdapter(mProductAdapter);
+
+//        // Create on item click listener for the ListView
+//        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
+//                // CursorAdapter returns a cursor at the correct position for getItem(), or null
+//                // if it cannot seek to that position.
+//                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
+//                if (c != null) {
+//                    String locationSetting = Utility.getPreferredLocation(getActivity());
+//                    Callback cb = (Callback) getActivity();
+//                    cb.onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
+//                            locationSetting, c.getLong(COL_WEATHER_DATE)
+//                    ));
+//                }
+//                mPosition = position;
+//            }
+//        });
+
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things. It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The listview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
+        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
+
+        return rootView;
     }
 
     @Override
@@ -139,16 +203,13 @@ public class ProductFragment extends Fragment
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        // Sort order: Acending, by date
-        String sortOrder = ShoppingContract.ProductEntry.COLUMN_NAME + " ASC";
+        // Sort order: Acending, by name
+        String sortOrder = PRODUCT_COLUMNS[COL_PRODUCT_NAME] + " ASC";
 
-        // Build Uri
-        Uri productUri = ShoppingContract.ProductEntry.CONTENT_URI;
-
-        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for product list: " + productUri.toString());
+        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for product list: " + mUri.toString());
 
         return new CursorLoader(getActivity(),
-                productUri, // URI
+                mUri,                  // URI
                 PRODUCT_COLUMNS,       // projection
                 null,                  // where
                 null,                  // binds
@@ -158,13 +219,6 @@ public class ProductFragment extends Fragment
 //    @Override
 //    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 //        inflater.inflate(R.menu.forecastfragment, menu);
-//    }
-
-    // TODO: Remove this which would always fetch weather from the web service
-//    @Override
-//    public void onStart() {
-//        super.onStart();
-//        updateWeather();
 //    }
 
 //    @Override
@@ -181,55 +235,6 @@ public class ProductFragment extends Fragment
 //
 //        return super.onOptionsItemSelected(item);
 //    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // The CursorAdapter will take data from a source and
-        // use it to populate the ListView it's attached to
-        mProductAdapter = new ProductAdapter(getActivity(), null, 0);
-        mProductAdapter.setTwoPaneLayout(mTwoPaneLayout);
-
-        View rootView = inflater.inflate(R.layout.fragment_product, container, false);
-
-        // Get a reference to the ListView, and attach this adapter to it
-        mListView = (ListView)rootView.findViewById(R.id.listview_products);
-        mListView.setAdapter(mProductAdapter);
-
-//        // Create on item click listener for the ListView
-//        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
-//                // CursorAdapter returns a cursor at the correct position for getItem(), or null
-//                // if it cannot seek to that position.
-//                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
-//                if (c != null) {
-//                    String locationSetting = Utility.getPreferredLocation(getActivity());
-//                    Callback cb = (Callback) getActivity();
-//                    cb.onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-//                            locationSetting, c.getLong(COL_WEATHER_DATE)
-//                    ));
-//                }
-//                mPosition = position;
-//            }
-//        });
-
-        // If there's instance state, mine it for useful information.
-        // The end-goal here is that the user never knows that turning their device sideways
-        // does crazy lifecycle related things. It should feel like some stuff stretched out,
-        // or magically appeared to take advantage of room, but data or place in the app was never
-        // actually *lost*.
-        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
-            // The listview probably hasn't even been populated yet.  Actually perform the
-            // swapout in onLoadFinished.
-            mPosition = savedInstanceState.getInt(SELECTED_KEY);
-        }
-
-        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
-
-        return rootView;
-    }
 
 //    public void onLocationChanged() {
 //        // Update location in action bar
