@@ -1,9 +1,12 @@
 package com.dandersen.app.easyshoppinglist;
 
 import android.annotation.TargetApi;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -15,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
@@ -76,7 +80,7 @@ public class ProductFragment extends Fragment
      */
     public interface Callback {
         /**
-         * DetailFragmentCallback for when an item has been selected.
+         * ProductFragmentCallback for when an item has been selected.
          */
         public void onItemSelected(Uri dateUri);
     }
@@ -241,7 +245,9 @@ public class ProductFragment extends Fragment
     }
 
     private void createNewProduct() {
-
+        // Create and start explicit intent
+        Intent intent = new Intent(getActivity(), NewProductActivity.class);
+        startActivity(intent);
     }
 
 //    public void onLocationChanged() {

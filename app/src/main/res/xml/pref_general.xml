@@ -7,7 +7,7 @@
         android:key="@string/pref_key_reset_product_database"
         android:dialogIcon="@android:drawable/ic_dialog_alert"
         android:title="Reset product database"
-        android:summary="Reset product database."
+        android:summary="Restore to factory settings."
         android:dialogMessage="Are you sure you wish to reset the product database? This action cannot be undone."
         android:positiveButtonText="Reset database"
         android:negativeButtonText="Cancel"/>

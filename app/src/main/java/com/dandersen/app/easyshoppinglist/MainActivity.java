@@ -10,7 +10,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity
-        implements ButtonFragment.Callback, CategoryFragment.Callback {
+        implements ButtonFragment.Callback,
+                   CategoryFragment.Callback {
 
     private boolean mTwoPane = false;
 
@@ -128,4 +129,5 @@ public class MainActivity extends AppCompatActivity
             transaction.commit();
         }
     }
+
 }

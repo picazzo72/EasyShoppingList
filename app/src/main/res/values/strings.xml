@@ -16,4 +16,10 @@
 
     // Activities
     <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_new_product">Add new product</string>
+
+    // Dialogs
+    <string name="dialog_new_product">Enter new product name</string>
+    <string name="dialog_create">Create</string>
+    <string name="dialog_cancel">Cancel</string>
 </resources>

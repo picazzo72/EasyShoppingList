@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="40dp">
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:id="@+id/current_list_group"
@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@drawable/ic_shopping_cart_black_36dp" />
 
         <TextView
             android:id="@+id/current_list_text"
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@drawable/ic_list_black_36dp"/>
 
         <TextView
             android:id="@+id/shopping_list_text"
@@ -67,7 +67,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@drawable/ic_layers_black_36dp"/>
 
         <TextView
             android:id="@+id/category_text"
@@ -92,7 +92,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@drawable/ic_shop_black_36dp"/>
 
         <TextView
             android:id="@+id/product_text"
@@ -117,7 +117,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@mipmap/ic_launcher"/>
+            android:src="@drawable/ic_store_black_36dp"/>
 
         <TextView
             android:id="@+id/shop_text"
