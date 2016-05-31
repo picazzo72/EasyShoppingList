@@ -28,6 +28,7 @@ public class ShoppingContract {
     public static final String PATH_SHOPPING_LIST = "shoppinglist";
     public static final String PATH_CATEGORY = "category";
     public static final String PATH_PRODUCT = "product";
+    public static final String PATH_PRODUCT_WITH_CATEGORY = "product_with_category";
     public static final String PATH_SHOP = "shop";
     public static final String PATH_SHOPPING_LIST_PRODUCTS = "shoppinglistproducts";
 
@@ -101,6 +102,8 @@ public class ShoppingContract {
 
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_PRODUCT).build();
+        public static final Uri CONTENT_WITH_CATEGORY_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_PRODUCT_WITH_CATEGORY).build();
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_PRODUCT;

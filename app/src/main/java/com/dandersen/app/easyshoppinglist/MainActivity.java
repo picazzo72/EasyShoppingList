@@ -22,20 +22,20 @@ public class MainActivity extends AppCompatActivity
 
         getSupportActionBar().setElevation(0f);
 
-        // If we're being restored from a previous state, then we don't need to do anything
-        // and should return or else we could end up with overlapping fragments.
-        if (savedInstanceState == null) {
-            // Create a new Fragment to be placed in the activity layout
-            CategoryFragment firstFragment = new CategoryFragment();
-
-            // In case this activity was started with special instructions from an
-            // Intent, pass the Intent's extras to the fragment as arguments
-            firstFragment.setArguments(getIntent().getExtras());
-
-            // Add the fragment to the 'fragment_container' FrameLayout
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container, firstFragment).commit();
-        }
+//        // If we're being restored from a previous state, then we don't need to do anything
+//        // and should return or else we could end up with overlapping fragments.
+//        if (savedInstanceState == null) {
+//            // Create a new Fragment to be placed in the activity layout
+//            CategoryFragment firstFragment = new CategoryFragment();
+//
+//            // In case this activity was started with special instructions from an
+//            // Intent, pass the Intent's extras to the fragment as arguments
+//            firstFragment.setArguments(getIntent().getExtras());
+//
+//            // Add the fragment to the 'fragment_container' FrameLayout
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.fragment_container, firstFragment).commit();
+//        }
     }
 
     @Override

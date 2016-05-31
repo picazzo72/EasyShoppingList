@@ -22,9 +22,8 @@
             android:paddingRight="24dp"
             android:scaleType="center" />
 
-        <EditText
-            android:id="@+id/dialog_new_product_name"
-            android:inputType="textAutoComplete"
+        <AutoCompleteTextView
+            android:id="@+id/new_product_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -50,7 +49,7 @@
             android:scaleType="center" />
 
         <Spinner
-            android:id="@+id/dialog_new_product_category"
+            android:id="@+id/new_product_category"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

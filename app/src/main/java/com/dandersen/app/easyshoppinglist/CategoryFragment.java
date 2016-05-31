@@ -191,7 +191,7 @@ public class CategoryFragment extends Fragment
         mCategoryAdapter = new CategoryAdapter(getActivity(), null, 0);
         mCategoryAdapter.setTwoPaneLayout(mTwoPaneLayout);
 
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_category, container, false);
 
         // Get a reference to the ListView, and attach this adapter to it
         mListView = (ListView)rootView.findViewById(R.id.listview_categories);

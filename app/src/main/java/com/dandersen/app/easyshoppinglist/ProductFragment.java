@@ -64,14 +64,15 @@ public class ProductFragment extends Fragment
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
             ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
-            ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry.COLUMN_NAME
+            ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry.COLUMN_NAME,
+            ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry.COLUMN_NAME
     };
 
     // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
     // must change.
     static final int COL_PRODUCT_ID = 0;
     static final int COL_PRODUCT_NAME = 1;
-
+    static final int COL_CATEGORY_NAME = 2;
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -112,7 +113,7 @@ public class ProductFragment extends Fragment
             mUri = arguments.getParcelable(ProductFragment.PRODUCT_FRAGMENT_URI);
         }
         else {
-            mUri = ShoppingContract.ProductEntry.CONTENT_URI;
+            mUri = ShoppingContract.ProductEntry.CONTENT_WITH_CATEGORY_URI;
         }
 
         // The CursorAdapter will take data from a source and

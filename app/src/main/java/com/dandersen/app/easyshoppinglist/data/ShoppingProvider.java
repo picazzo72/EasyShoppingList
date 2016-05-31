@@ -26,7 +26,8 @@ public class ShoppingProvider extends ContentProvider {
     // URI definitions
     static final int CATEGORY = 100;                // Category list
     static final int PRODUCT = 200;                 // Product list
-    static final int PRODUCT_WITH_CATEGORY = 201;   // Product list for category
+    static final int PRODUCT_BY_CATEGORY = 201;     // Product list for category
+    static final int PRODUCT_WITH_CATEGORY = 202;   // Product list with category (with category columns)
     static final int SHOPPING_LIST = 300;           // Shopping lists
     static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
     static final int SHOP = 400;                    // Shop list
@@ -66,7 +67,9 @@ public class ShoppingProvider extends ContentProvider {
         matcher.addURI(authority, ShoppingContract.PATH_CATEGORY, CATEGORY);
 
         matcher.addURI(authority, ShoppingContract.PATH_PRODUCT, PRODUCT);
-        matcher.addURI(authority, ShoppingContract.PATH_PRODUCT + "/*", PRODUCT_WITH_CATEGORY);
+        matcher.addURI(authority, ShoppingContract.PATH_PRODUCT + "/*", PRODUCT_BY_CATEGORY);
+
+        matcher.addURI(authority, ShoppingContract.PATH_PRODUCT_WITH_CATEGORY, PRODUCT_WITH_CATEGORY);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST, SHOPPING_LIST);
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST + "/*", SHOPPING_LIST_ACTIVE);
@@ -104,6 +107,8 @@ public class ShoppingProvider extends ContentProvider {
             case CATEGORY:
                 return ShoppingContract.CategoryEntry.CONTENT_TYPE;
             case PRODUCT:
+                return ShoppingContract.ProductEntry.CONTENT_TYPE;
+            case PRODUCT_BY_CATEGORY:
                 return ShoppingContract.ProductEntry.CONTENT_TYPE;
             case PRODUCT_WITH_CATEGORY:
                 return ShoppingContract.ProductEntry.CONTENT_TYPE;
@@ -148,6 +153,21 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getProductWithCategory(
+            String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        Log.v(LOG_TAG, "DSA LOG - Product list");
+
+        return sProductByCategoryQueryBuilder.query(
+                mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getProductByCategory(Uri uri, String[] projection, String sortOrder) {
         String category = ShoppingContract.ProductEntry.getCategoryFromUri(uri);
 
@@ -160,7 +180,8 @@ public class ShoppingProvider extends ContentProvider {
         }
         Log.v(LOG_TAG, "DSA LOG - Product by category '" + selection + "' binds: " + selectionArgsBuilder.toString());
 
-        return sProductByCategoryQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+        return sProductByCategoryQueryBuilder.query(
+                mOpenHelper.getReadableDatabase(),
                 projection,
                 selection,
                 selectionArgs,
@@ -234,10 +255,16 @@ public class ShoppingProvider extends ContentProvider {
                 retCursor = getProduct(projection, selection, selectionArgs, sortOrder);
                 break;
             }
-            // "weather/*"
-            case PRODUCT_WITH_CATEGORY:
+            // "product/*"
+            case PRODUCT_BY_CATEGORY:
             {
                 retCursor = getProductByCategory(uri, projection, sortOrder);
+                break;
+            }
+            // "product_with_category"
+            case PRODUCT_WITH_CATEGORY:
+            {
+                retCursor = getProductWithCategory(projection, selection, selectionArgs, sortOrder);
                 break;
             }
             // "shopping_list"

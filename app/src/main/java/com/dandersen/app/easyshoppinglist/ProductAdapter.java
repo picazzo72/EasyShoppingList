@@ -32,10 +32,12 @@ public class ProductAdapter extends CursorAdapter {
      * Cache of the children views for a category list item.
      */
     private static class ViewHolder {
-        public final TextView nameView;
+        public final TextView productNameView;
+        public final TextView categoryNameView;
 
         public ViewHolder(View view) {
-            nameView = (TextView) view.findViewById(R.id.list_item_product_name);
+            productNameView     = (TextView) view.findViewById(R.id.list_item_product_name);
+            categoryNameView    = (TextView) view.findViewById(R.id.list_item_category_name);
         }
     }
 
@@ -70,8 +72,11 @@ public class ProductAdapter extends CursorAdapter {
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        // Category name
-        String name = cursor.getString(ProductFragment.COL_PRODUCT_NAME);
-        viewHolder.nameView.setText(name);
+        // Product name
+        String productName = cursor.getString(ProductFragment.COL_PRODUCT_NAME);
+        viewHolder.productNameView.setText(productName);
+
+        String categoryName = cursor.getString(ProductFragment.COL_CATEGORY_NAME);
+        viewHolder.categoryNameView.setText(categoryName);
     }
 }
