@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
@@ -8,9 +9,11 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -25,7 +28,7 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
  */
 public class NewProductFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor>,
-        AdapterView.OnItemSelectedListener {
+                   AdapterView.OnItemSelectedListener {
 
     private SimpleCursorAdapter mSimpleCursorAdapter;
 
@@ -62,7 +65,6 @@ public class NewProductFragment extends Fragment
 
             spinner.setOnItemSelectedListener(this);
             spinner.requestFocus();
-            spinner.performClick();
         }
     }
 
@@ -87,11 +89,11 @@ public class NewProductFragment extends Fragment
     private void setupProductAutoCompletion() {
         // Create adapter
         final String[] adapterFromCols = new String[]{
-                ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry.COLUMN_NAME ,
+                ShoppingContract.ProductEntry.COLUMN_NAME ,
                 ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID };
         int[] adapterToRowViews = new int[]{ android.R.id.text1 };
         SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(),
-                android.R.layout.simple_dropdown_item_1line,
+                R.layout.spinner_item,
                 null,
                 adapterFromCols,
                 adapterToRowViews,
@@ -111,18 +113,14 @@ public class NewProductFragment extends Fragment
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
             public Cursor runQuery(CharSequence productNameFragment) {
-                if (productNameFragment.length() > 0) {
+                if (productNameFragment != null) {
                     String categoryName = getCategoryName();
                     if (!categoryName.isEmpty()) {
-                        StringBuffer selection = new StringBuffer(
-                                ShoppingContract.ProductEntry.TABLE_NAME)
-                                .append(".")
-                                .append(ShoppingContract.ProductEntry.COLUMN_NAME)
+                        StringBuffer selection = new StringBuffer(ShoppingContract.ProductEntry.COLUMN_NAME)
                                 .append(" LIKE '")
                                 .append(productNameFragment)
                                 .append("%'");
-                        String sortOrder = ShoppingContract.ProductEntry.TABLE_NAME + "." +
-                                ShoppingContract.ProductEntry.COLUMN_NAME;
+                        String sortOrder = ShoppingContract.ProductEntry.COLUMN_NAME;
 
                         Cursor managedCursor = getActivity().getContentResolver().query(
                                 ShoppingContract.ProductEntry.buildProductCategory(categoryName),
@@ -142,6 +140,16 @@ public class NewProductFragment extends Fragment
                 .findViewById(R.id.new_product_name);
         productTextView.setAdapter(adapter);
         productTextView.clearFocus();
+        productTextView.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_ENTER /*66*/) {
+                    ((NewProductActivity) getActivity()).createProduct(getView());
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     String getCategoryName() {
@@ -161,6 +169,10 @@ public class NewProductFragment extends Fragment
         EditText newProductText = (EditText) getActivity().findViewById(R.id.new_product_name);
         newProductText.setEnabled(true);
         setupProductAutoCompletion();
+
+        // Show keyboard
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(newProductText, InputMethodManager.SHOW_IMPLICIT);
     }
 
     @Override

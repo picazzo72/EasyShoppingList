@@ -2,18 +2,28 @@ package com.dandersen.app.easyshoppinglist;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 public class MainActivity extends AppCompatActivity
         implements ButtonFragment.Callback,
                    CategoryFragment.Callback {
 
-    private boolean mTwoPane = false;
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
+
+    private int mSelectedButton = 0;
+
+    private boolean mTwoPaneLayout = false;
+
+    private final int CurrentList     = 0;
+    private final int ShoppingList    = 1;
+    private final int Category        = 2;
+    private final int Product         = 3;
+    private final int Shop            = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +52,8 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -63,12 +74,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onShopBtn(View view) {
-
+    public void onShopBtn() {
+        mSelectedButton = Shop;
     }
 
     @Override
-    public void onProductBtn(View view) {
+    public void onProductBtn() {
+        mSelectedButton = Product;
+
         // Create a new Fragment to be placed in the activity layout
         ProductFragment fragment = new ProductFragment();
 
@@ -82,7 +95,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onCategoryBtn(View view) {
+    public void onCategoryBtn() {
+        mSelectedButton = Category;
+
         // Create a new Fragment to be placed in the activity layout
         CategoryFragment fragment = new CategoryFragment();
 
@@ -96,13 +111,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onShoppingListBtn(View view) {
-
+    public void onShoppingListBtn() {
+        mSelectedButton = ShoppingList;
     }
 
     @Override
-    public void onCurrentListBtn(View view) {
-
+    public void onCurrentListBtn() {
+        mSelectedButton = CurrentList;
     }
 
     @Override
@@ -113,7 +128,7 @@ public class MainActivity extends AppCompatActivity
         ProductFragment productFragment = new ProductFragment();
         productFragment.setArguments(arguments);
 
-        if (mTwoPane) {
+        if (mTwoPaneLayout) {
             // In two-pane mode show the detail view in this activity by adding
             // or replacing the detail fragment using a fragment transaction
 

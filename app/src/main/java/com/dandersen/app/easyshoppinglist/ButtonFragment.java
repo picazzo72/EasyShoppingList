@@ -41,11 +41,11 @@ public class ButtonFragment extends Fragment {
         /**
          * ButtonFragmentCallback for when a button has been selected.
          */
-        void onCurrentListBtn(View view);
-        void onShoppingListBtn(View view);
-        void onCategoryBtn(View view);
-        void onProductBtn(View view);
-        void onShopBtn(View view);
+        void onCurrentListBtn();
+        void onShoppingListBtn();
+        void onCategoryBtn();
+        void onProductBtn();
+        void onShopBtn();
     }
 
     public ButtonFragment() {
@@ -61,9 +61,6 @@ public class ButtonFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // The following line makes this fragment handle menu events
-        setHasOptionsMenu(true);
     }
 
     /**
@@ -143,35 +140,35 @@ public class ButtonFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 setSelectedButton(CurrentList);
-                ((Callback)getActivity()).onCurrentListBtn(view);
+                ((Callback)getActivity()).onCurrentListBtn();
             }
         });
         viewHolder.shoppingListGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 setSelectedButton(ShoppingList);
-                ((Callback)getActivity()).onShoppingListBtn(view);
+                ((Callback)getActivity()).onShoppingListBtn();
             }
         });
         viewHolder.categoryGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 setSelectedButton(Category);
-                ((Callback)getActivity()).onCategoryBtn(view);
+                ((Callback)getActivity()).onCategoryBtn();
             }
         });
         viewHolder.productGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 setSelectedButton(Product);
-                ((Callback)getActivity()).onProductBtn(view);
+                ((Callback)getActivity()).onProductBtn();
             }
         });
         viewHolder.shopGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 setSelectedButton(Shop);
-                ((Callback)getActivity()).onShopBtn(view);
+                ((Callback)getActivity()).onShopBtn();
             }
         });
 

@@ -10,6 +10,7 @@ import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.TextView;
 
 /**
@@ -78,5 +79,17 @@ public class ProductAdapter extends CursorAdapter {
 
         String categoryName = cursor.getString(ProductFragment.COL_CATEGORY_NAME);
         viewHolder.categoryNameView.setText(categoryName);
+    }
+
+    /**
+     * Used to find the position of a given product in the list of products
+     * @param id of product
+     * @return position in the list
+     */
+    public int getItemPosition(long id) {
+        for (int position=0, count = getCount(); position < count; ++position)
+            if (this.getItemId(position) == id)
+                return position;
+        return -1;
     }
 }

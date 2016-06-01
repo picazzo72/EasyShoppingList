@@ -172,7 +172,10 @@ public class ShoppingProvider extends ContentProvider {
         String category = ShoppingContract.ProductEntry.getCategoryFromUri(uri);
 
         String[] selectionArgs = new String[]{ category };
-        if (!selection.isEmpty()) {
+        if (selection == null) {
+            selection = "";
+        }
+        else if (!selection.isEmpty()) {
             selection += " AND ";
         }
         selection += sCategorySelection;

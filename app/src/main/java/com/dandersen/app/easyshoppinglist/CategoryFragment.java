@@ -69,7 +69,7 @@ public class CategoryFragment extends Fragment
         /**
          * CategoryFragmentCallback for when an item has been selected.
          */
-        public void onCategoryItemSelected(Uri uri);
+        void onCategoryItemSelected(Uri uri);
     }
 
 

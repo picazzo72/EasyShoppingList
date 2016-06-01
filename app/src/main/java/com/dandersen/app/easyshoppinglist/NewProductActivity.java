@@ -1,7 +1,10 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -77,7 +80,13 @@ public class NewProductActivity extends AppCompatActivity {
         contentValues.put(ShoppingContract.ProductEntry.COLUMN_CUSTOM, 1);
 
         // Insert product
-        getContentResolver().insert(ShoppingContract.ProductEntry.CONTENT_URI, contentValues);
+        Uri insertedProductUri = getContentResolver().insert(ShoppingContract.ProductEntry.CONTENT_URI, contentValues);
+        long newProductId = ContentUris.parseId(insertedProductUri);
+
+        // Return result to caller
+        Intent intent = new Intent();
+        intent.putExtra(ProductFragment.PRODUCT_ID_TAG, newProductId);
+        setResult(RESULT_OK, intent);
 
         finish();
     }

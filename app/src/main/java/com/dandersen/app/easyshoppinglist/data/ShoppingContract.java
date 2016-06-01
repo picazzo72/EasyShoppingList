@@ -88,10 +88,10 @@ public class ShoppingContract {
         public static final String TABLE_NAME = PATH_CATEGORY;
 
         // Name
-        public static final String COLUMN_NAME = "name";
+        public static final String COLUMN_NAME = "category_name";
 
         // Description
-        public static final String COLUMN_DESCRIPTION = "description";
+        public static final String COLUMN_DESCRIPTION = "category_description";
 
         public static Uri buildCategoryUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -114,7 +114,7 @@ public class ShoppingContract {
         public static final String TABLE_NAME = PATH_PRODUCT;
 
         // Name
-        public static final String COLUMN_NAME = "name";
+        public static final String COLUMN_NAME = "product_name";
 
         // Category
         public static final String COLUMN_CATEGORY_ID = "category_id";
@@ -158,7 +158,7 @@ public class ShoppingContract {
         public static final String TABLE_NAME = PATH_SHOP;
 
         // Name
-        public static final String COLUMN_NAME = "name";
+        public static final String COLUMN_NAME = "shop_name";
 
         // Address
         public static final String COLUMN_ADDRESS = "address";

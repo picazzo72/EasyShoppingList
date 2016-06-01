@@ -1,12 +1,9 @@
 package com.dandersen.app.easyshoppinglist;
 
-import android.annotation.TargetApi;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -18,8 +15,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 
@@ -31,15 +28,21 @@ public class ProductFragment extends Fragment
 
     private final String LOG_TAG = ProductFragment.class.getSimpleName();
 
+    // Tags for bundle
+    public static String PRODUCT_ID_TAG = "product_id";
+
     private ProductAdapter mProductAdapter;
 
     private boolean mTwoPaneLayout = false;
 
-    // Our forecast list view
+    // Our product list view
     private ListView mListView;
 
     // Keeping track of the selected item
     private int mPosition = ListView.INVALID_POSITION;
+
+    // Product id to select after load has finished
+    private long mProductId = 0;
 
     // Tag for save instance bundle
     private static final String SELECTED_KEY = "selected_position";
@@ -64,8 +67,8 @@ public class ProductFragment extends Fragment
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
             ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
-            ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry.COLUMN_NAME,
-            ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry.COLUMN_NAME
+            ShoppingContract.ProductEntry.COLUMN_NAME,
+            ShoppingContract.CategoryEntry.COLUMN_NAME
     };
 
     // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
@@ -112,7 +115,7 @@ public class ProductFragment extends Fragment
         if (arguments != null) {
             mUri = arguments.getParcelable(ProductFragment.PRODUCT_FRAGMENT_URI);
         }
-        else {
+        if (mUri == null) {
             mUri = ShoppingContract.ProductEntry.CONTENT_WITH_CATEGORY_URI;
         }
 
@@ -124,7 +127,7 @@ public class ProductFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_product, container, false);
 
         // Get a reference to the ListView, and attach this adapter to it
-        mListView = (ListView)rootView.findViewById(R.id.listview_products);
+        mListView = (ListView) rootView.findViewById(R.id.listview_products);
         mListView.setAdapter(mProductAdapter);
 
 //        // Create on item click listener for the ListView
@@ -157,7 +160,7 @@ public class ProductFragment extends Fragment
         }
 
         // Prepare the loader.  Either re-connect with an existing one, or start a new one.
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
 
         return rootView;
     }
@@ -174,36 +177,30 @@ public class ProductFragment extends Fragment
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
 
-//        // Select first item or last selected if this is available
-//        int listSelection = 0;
-//        if (mPosition != ListView.INVALID_POSITION) {
-//            listSelection = mPosition;
-//        }
-//        class SelectListItem implements Runnable {
-//            int mListSelection;
-//            SelectListItem(int sel) { mListSelection = sel; }
-//            public void run() {
-//                if (!mRestartingLoader && mListView.getCount() == 0) {
-//                    // If there are no items in the list we update the database with weather info
-//                    mRestartingLoader = true; // Boolean to ensure that we do not loop indefinitely
-//                    onLocationChanged();
-//                }
-//                else {
-//                    mRestartingLoader = false;
-//                    if (mListSelection < mListView.getCount()) {
-//                        mPosition = mListSelection;
-//                        if (mTwoPaneLayout) {
-//                            mListView.performItemClick(
-//                                    mListView.getChildAt(mPosition),
-//                                    mPosition,
-//                                    mListView.getChildAt(mPosition).getId());
-//                        }
-//                        mListView.smoothScrollToPosition(mPosition);
-//                    }
-//                }
-//            }
-//        }
-//        mListView.post(new SelectListItem(listSelection));
+        // Select first item, last selected or new product if one of these are available
+        if (mPosition != ListView.INVALID_POSITION || mProductId > 0) {
+            class SelectListItem implements Runnable {
+                int mListSelection;
+                long mProductId;
+                SelectListItem(int sel, long productId) { mListSelection = sel; mProductId = productId; }
+                public void run() {
+                    if (mProductId > 0) {
+                        mListSelection = mProductAdapter.getItemPosition(mProductId);
+                    }
+                    if (mListSelection < mListView.getCount()) {
+                        mPosition = mListSelection;
+                        if (mTwoPaneLayout) {
+                            mListView.performItemClick(
+                                    mListView.getChildAt(mPosition),
+                                    mPosition,
+                                    mListView.getChildAt(mPosition).getId());
+                        }
+                        mListView.setSelection(mPosition);
+                    }
+                }
+            }
+            mListView.post(new SelectListItem(mPosition, mProductId));
+        }
 
         // Swap the new cursor in.  (The framework will take care of closing the
         // old cursor once we return.)
@@ -211,7 +208,7 @@ public class ProductFragment extends Fragment
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    public Loader<Cursor> onCreateLoader(int id, Bundle arguments) {
         // Sort order: Acending, by name
         String sortOrder = PRODUCT_COLUMNS[COL_PRODUCT_NAME] + " ASC";
 
@@ -248,31 +245,24 @@ public class ProductFragment extends Fragment
     private void createNewProduct() {
         // Create and start explicit intent
         Intent intent = new Intent(getActivity(), NewProductActivity.class);
-        startActivity(intent);
+        int requestCode = 1;
+        startActivityForResult(intent, requestCode);
     }
 
-//    public void onLocationChanged() {
-//        // Update location in action bar
-//        String location = Utility.getPreferredLocation(getActivity());
-//        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-//        actionBar.setSubtitle(location);
-//
-//        // Update weather data
-//        updateWeather();
-//
-//        // Restart loader to update UI
-//        getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
-//    }
-//
-//    private void updateWeather() {
-//        Log.v(LOG_TAG, "DSA LOG - Weather is being updated");
-//
-//        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-//        String location = Utility.getPreferredLocation(getActivity());
-//
-//        // Execute fetch weather task
-//        weatherTask.execute(location);
-//    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        try {
+            super.onActivityResult(requestCode, resultCode, data);
+
+            mProductId = data.getLongExtra(ProductFragment.PRODUCT_ID_TAG, 0);
+            if (mProductId > 0) {
+                getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
+            }
+        } catch (Exception ex) {
+            Toast.makeText(getActivity(), ex.toString(),
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {

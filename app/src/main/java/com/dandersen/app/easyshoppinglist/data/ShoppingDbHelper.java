@@ -18,7 +18,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
     private static final String LOG_TAG = ShoppingDbHelper.class.getSimpleName();
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     static final String DATABASE_NAME = "shopping.db";
 
