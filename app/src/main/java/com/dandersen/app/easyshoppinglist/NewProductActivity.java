@@ -54,10 +54,8 @@ public class NewProductActivity extends AppCompatActivity {
         String categoryName = ((TextView) spinner.getSelectedView().findViewById(android.R.id.text1)).getText().toString();
 
         // Check that product name does not already exist in this category
-        String[] columns = new String[] { ShoppingContract.ProductEntry.TABLE_NAME + "." +
-                                          ShoppingContract.ProductEntry._ID };
-        String where = ShoppingContract.ProductEntry.TABLE_NAME + "." +
-                       ShoppingContract.ProductEntry.COLUMN_NAME + "= ? AND " +
+        String[] columns = new String[] { ShoppingContract.ProductEntry._ID };
+        String where = ShoppingContract.ProductEntry.COLUMN_NAME + "= ? AND " +
                        ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID + "= ?";
         String[] binds = new String[] { productName , Long.toString(categoryId) };
         Cursor c = getContentResolver().query(

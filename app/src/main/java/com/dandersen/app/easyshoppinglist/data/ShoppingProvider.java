@@ -168,11 +168,14 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
-    private Cursor getProductByCategory(Uri uri, String[] projection, String sortOrder) {
+    private Cursor getProductByCategory(Uri uri, String[] projection, String selection, String sortOrder) {
         String category = ShoppingContract.ProductEntry.getCategoryFromUri(uri);
 
         String[] selectionArgs = new String[]{ category };
-        String selection = sCategorySelection;
+        if (!selection.isEmpty()) {
+            selection += " AND ";
+        }
+        selection += sCategorySelection;
 
         StringBuilder selectionArgsBuilder = new StringBuilder();
         for (int i = 0; i < selectionArgs.length; i++) {
@@ -258,7 +261,7 @@ public class ShoppingProvider extends ContentProvider {
             // "product/*"
             case PRODUCT_BY_CATEGORY:
             {
-                retCursor = getProductByCategory(uri, projection, sortOrder);
+                retCursor = getProductByCategory(uri, projection, selection, sortOrder);
                 break;
             }
             // "product_with_category"
