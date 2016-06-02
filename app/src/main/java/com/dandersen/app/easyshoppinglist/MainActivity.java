@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -30,6 +31,9 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Toolbar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         getSupportActionBar().setElevation(0f);
 
 //        // If we're being restored from a previous state, then we don't need to do anything
@@ -46,6 +50,20 @@ public class MainActivity extends AppCompatActivity
 //            getSupportFragmentManager().beginTransaction()
 //                    .add(R.id.fragment_container, firstFragment).commit();
 //        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mSelectedButton == Category) {
+            ProductFragment fragment = (ProductFragment) getSupportFragmentManager().findFragmentByTag(ProductFragment.PRODUCT_FRAGMENT_TAG);
+            if (fragment != null) {
+                if (fragment.mChildFragment) {
+                    onCategoryBtn();
+                    return;
+                }
+            }
+        }
+        super.onBackPressed();
     }
 
     @Override
@@ -139,9 +157,8 @@ public class MainActivity extends AppCompatActivity
         }
         else {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, productFragment);
-            transaction.addToBackStack(null);
-            transaction.commit();
+            transaction.replace(R.id.fragment_container, productFragment, ProductFragment.PRODUCT_FRAGMENT_TAG)
+                    .commit();
         }
     }
 

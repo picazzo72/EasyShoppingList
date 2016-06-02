@@ -90,7 +90,7 @@ public class NewProductFragment extends Fragment
         // Create adapter
         final String[] adapterFromCols = new String[]{
                 ShoppingContract.ProductEntry.COLUMN_NAME ,
-                ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID };
+                ShoppingContract.ProductEntry._ID };
         int[] adapterToRowViews = new int[]{ android.R.id.text1 };
         SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(),
                 R.layout.spinner_item,
@@ -119,14 +119,27 @@ public class NewProductFragment extends Fragment
                         StringBuffer selection = new StringBuffer(ShoppingContract.ProductEntry.COLUMN_NAME)
                                 .append(" LIKE '")
                                 .append(productNameFragment)
-                                .append("%'");
+                                .append("%'")
+                                .append(" AND ")
+                                .append(ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID)
+                                .append(" IN ")
+                                .append("( SELECT ")
+                                .append(ShoppingContract.CategoryEntry._ID)
+                                .append(" FROM ")
+                                .append(ShoppingContract.CategoryEntry.TABLE_NAME)
+                                .append(" WHERE ")
+                                .append(ShoppingContract.CategoryEntry.COLUMN_NAME)
+                                .append(" = ")
+                                .append("? ")
+                                .append(")");
+
                         String sortOrder = ShoppingContract.ProductEntry.COLUMN_NAME;
 
                         Cursor managedCursor = getActivity().getContentResolver().query(
-                                ShoppingContract.ProductEntry.buildProductCategory(categoryName),
+                                ShoppingContract.ProductEntry.CONTENT_URI,
                                 adapterFromCols,
                                 selection.toString(),
-                                null,
+                                new String[] { categoryName },
                                 sortOrder);
                         return managedCursor;
                     }

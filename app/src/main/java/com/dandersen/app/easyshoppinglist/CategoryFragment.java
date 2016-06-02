@@ -7,6 +7,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,8 +41,6 @@ public class CategoryFragment extends Fragment
 
     private static final int CURSOR_LOADER_ID = 0;
 
-    private boolean mRestartingLoader = false;
-
     // For the category view we're showing only a small subset of the stored data.
     // Specify the columns we need.
     private static final String[] CATEGORY_COLUMNS = {
@@ -51,7 +51,7 @@ public class CategoryFragment extends Fragment
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
             ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry._ID,
-            ShoppingContract.CategoryEntry.TABLE_NAME + "." + ShoppingContract.CategoryEntry.COLUMN_NAME
+            ShoppingContract.CategoryEntry.COLUMN_NAME
     };
 
     // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
@@ -88,6 +88,66 @@ public class CategoryFragment extends Fragment
         super.onCreate(savedInstanceState);
         // The following line makes this fragment handle menu events
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // The CursorAdapter will take data from a source and
+        // use it to populate the ListView it's attached to
+        mCategoryAdapter = new CategoryAdapter(getActivity(), null, 0);
+        mCategoryAdapter.setTwoPaneLayout(mTwoPaneLayout);
+
+        View rootView = inflater.inflate(R.layout.fragment_category, container, false);
+
+        // Get a reference to the ListView, and attach this adapter to it
+        mListView = (ListView)rootView.findViewById(R.id.listview_categories);
+        mListView.setAdapter(mCategoryAdapter);
+
+        // Create on item click listener for the ListView
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
+                // CursorAdapter returns a cursor at the correct position for getItem(), or null
+                // if it cannot seek to that position.
+                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
+                if (c != null) {
+                    Callback cb = (Callback) getActivity();
+                    String category = c.getString(COL_CATEGORY_NAME);
+                    cb.onCategoryItemSelected(ShoppingContract.ProductEntry.buildProductCategory(
+                            category
+                    ));
+                }
+                mPosition = position;
+            }
+        });
+
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things. It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The listview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
+        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
+
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setDisplayShowHomeEnabled(false);
+        }
     }
 
     @Override
@@ -181,78 +241,6 @@ public class CategoryFragment extends Fragment
 //        }
 //
 //        return super.onOptionsItemSelected(item);
-//    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // The CursorAdapter will take data from a source and
-        // use it to populate the ListView it's attached to
-        mCategoryAdapter = new CategoryAdapter(getActivity(), null, 0);
-        mCategoryAdapter.setTwoPaneLayout(mTwoPaneLayout);
-
-        View rootView = inflater.inflate(R.layout.fragment_category, container, false);
-
-        // Get a reference to the ListView, and attach this adapter to it
-        mListView = (ListView)rootView.findViewById(R.id.listview_categories);
-        mListView.setAdapter(mCategoryAdapter);
-
-        // Create on item click listener for the ListView
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView adapterView, View view, int position, long l) {
-                // CursorAdapter returns a cursor at the correct position for getItem(), or null
-                // if it cannot seek to that position.
-                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
-                if (c != null) {
-                    Callback cb = (Callback) getActivity();
-                    String category = c.getString(COL_CATEGORY_NAME);
-                    cb.onCategoryItemSelected(ShoppingContract.ProductEntry.buildProductCategory(
-                            category
-                    ));
-                }
-                mPosition = position;
-            }
-        });
-
-        // If there's instance state, mine it for useful information.
-        // The end-goal here is that the user never knows that turning their device sideways
-        // does crazy lifecycle related things. It should feel like some stuff stretched out,
-        // or magically appeared to take advantage of room, but data or place in the app was never
-        // actually *lost*.
-        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
-            // The listview probably hasn't even been populated yet.  Actually perform the
-            // swapout in onLoadFinished.
-            mPosition = savedInstanceState.getInt(SELECTED_KEY);
-        }
-
-        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
-
-        return rootView;
-    }
-
-//    public void onLocationChanged() {
-//        // Update location in action bar
-//        String location = Utility.getPreferredLocation(getActivity());
-//        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-//        actionBar.setSubtitle(location);
-//
-//        // Update weather data
-//        updateWeather();
-//
-//        // Restart loader to update UI
-//        getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
-//    }
-//
-//    private void updateWeather() {
-//        Log.v(LOG_TAG, "DSA LOG - Weather is being updated");
-//
-//        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-//        String location = Utility.getPreferredLocation(getActivity());
-//
-//        // Execute fetch weather task
-//        weatherTask.execute(location);
 //    }
 
     @Override

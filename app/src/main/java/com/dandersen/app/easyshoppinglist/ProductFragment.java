@@ -4,10 +4,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,8 +34,12 @@ public class ProductFragment extends Fragment
     // Tags for bundle
     public static String PRODUCT_ID_TAG = "product_id";
 
+    // Tag for fragment
+    public static String PRODUCT_FRAGMENT_TAG = "ProductFragment";
+
     private ProductAdapter mProductAdapter;
 
+    public boolean mChildFragment = false;
     private boolean mTwoPaneLayout = false;
 
     // Our product list view
@@ -117,6 +124,10 @@ public class ProductFragment extends Fragment
         }
         if (mUri == null) {
             mUri = ShoppingContract.ProductEntry.CONTENT_WITH_CATEGORY_URI;
+            mChildFragment = false;
+        }
+        else {
+            mChildFragment = true;
         }
 
         // The CursorAdapter will take data from a source and
@@ -163,6 +174,17 @@ public class ProductFragment extends Fragment
         getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
 
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(mChildFragment);
+            actionBar.setDisplayShowHomeEnabled(mChildFragment);
+        }
     }
 
     @Override
@@ -236,6 +258,10 @@ public class ProductFragment extends Fragment
 
         if (id == R.id.action_new) {
             createNewProduct();
+            return true;
+        }
+        else if (id == android.R.id.home) {
+            ((ButtonFragment.Callback) getActivity()).onCategoryBtn();
             return true;
         }
 
