@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -33,6 +32,7 @@ public class ProductFragment extends Fragment
 
     // Tags for bundle
     public static String PRODUCT_ID_TAG = "product_id";
+    public static String CATEGORY_NAME_TAG = "category_name";
 
     // Tag for fragment
     public static String PRODUCT_FRAGMENT_TAG = "ProductFragment";
@@ -261,7 +261,7 @@ public class ProductFragment extends Fragment
             return true;
         }
         else if (id == android.R.id.home) {
-            ((ButtonFragment.Callback) getActivity()).onCategoryBtn();
+            ((ButtonFragment.Callback) getActivity()).onCategory();
             return true;
         }
 
@@ -271,6 +271,10 @@ public class ProductFragment extends Fragment
     private void createNewProduct() {
         // Create and start explicit intent
         Intent intent = new Intent(getActivity(), NewProductActivity.class);
+        if (mChildFragment) {
+            String category = ShoppingContract.ProductEntry.getCategoryFromUri(mUri);
+            intent.putExtra(CATEGORY_NAME_TAG, category);
+        }
         int requestCode = 1;
         startActivityForResult(intent, requestCode);
     }
@@ -280,9 +284,11 @@ public class ProductFragment extends Fragment
         try {
             super.onActivityResult(requestCode, resultCode, data);
 
-            mProductId = data.getLongExtra(ProductFragment.PRODUCT_ID_TAG, 0);
-            if (mProductId > 0) {
-                getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
+            if (data != null) {
+                mProductId = data.getLongExtra(ProductFragment.PRODUCT_ID_TAG, 0);
+                if (mProductId > 0) {
+                    getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
+                }
             }
         } catch (Exception ex) {
             Toast.makeText(getActivity(), ex.toString(),

@@ -1,8 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
+import com.dandersen.app.easyshoppinglist.data.Settings;
+
 /**
  * Created by Dan on 27-05-2016.
  */
@@ -19,18 +20,7 @@ public class ButtonFragment extends Fragment {
 
     private final String LOG_TAG = ButtonFragment.class.getSimpleName();
 
-    // Tag for save instance bundle
-    private static final String SELECTED_BUTTON = "selected_button";
-    // Current button selection
-    private int mSelectedButton = 0;
-
     private boolean mTwoPaneLayout = false;
-
-    private final int CurrentList     = 0;
-    private final int ShoppingList    = 1;
-    private final int Category        = 2;
-    private final int Product         = 3;
-    private final int Shop            = 4;
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -41,11 +31,12 @@ public class ButtonFragment extends Fragment {
         /**
          * ButtonFragmentCallback for when a button has been selected.
          */
-        void onCurrentListBtn();
-        void onShoppingListBtn();
-        void onCategoryBtn();
-        void onProductBtn();
-        void onShopBtn();
+        void onCurrentList();
+        void onShoppingList();
+        void onCategory();
+        void onProduct();
+        void onShop();
+        void onCategoryProduct();
     }
 
     public ButtonFragment() {
@@ -98,11 +89,11 @@ public class ButtonFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setSelectedButton(mSelectedButton);
+        setSelectedView(Settings.getInstance().getSelectedView());
 
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
 
-        switch (mSelectedButton) {
+        switch (Settings.getInstance().getSelectedView()) {
             case CurrentList:
                 viewHolder.currentListGroup.callOnClick();
                 break;
@@ -118,8 +109,11 @@ public class ButtonFragment extends Fragment {
             case Shop:
                 viewHolder.shopGroup.callOnClick();
                 break;
+            case CategoryProduct:
+                ((Callback)getActivity()).onCategoryProduct();
+                break;
             default:
-                throw new UnsupportedOperationException("Unknown button position: " + mSelectedButton);
+                throw new UnsupportedOperationException("Unknown button position: " + Settings.getInstance().getSelectedView());
         }
     }
 
@@ -139,47 +133,43 @@ public class ButtonFragment extends Fragment {
         viewHolder.currentListGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedButton(CurrentList);
-                ((Callback)getActivity()).onCurrentListBtn();
+                setSelectedView(SelectedViewEnum.CurrentList);
+                ((Callback)getActivity()).onCurrentList();
             }
         });
         viewHolder.shoppingListGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedButton(ShoppingList);
-                ((Callback)getActivity()).onShoppingListBtn();
+                setSelectedView(SelectedViewEnum.ShoppingList);
+                ((Callback)getActivity()).onShoppingList();
             }
         });
         viewHolder.categoryGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedButton(Category);
-                ((Callback)getActivity()).onCategoryBtn();
+                setSelectedView(SelectedViewEnum.Category);
+                ((Callback)getActivity()).onCategory();
             }
         });
         viewHolder.productGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedButton(Product);
-                ((Callback)getActivity()).onProductBtn();
+                setSelectedView(SelectedViewEnum.Product);
+                ((Callback)getActivity()).onProduct();
             }
         });
         viewHolder.shopGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedButton(Shop);
-                ((Callback)getActivity()).onShopBtn();
+                setSelectedView(SelectedViewEnum.Shop);
+                ((Callback)getActivity()).onShop();
             }
         });
-
-        // Load button selection from Shared Preferences
-        mSelectedButton = Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(
-                getActivity()).getInt(SELECTED_BUTTON, CurrentList));
 
         return rootView;
     }
 
-    private void setSelectedButton(int pos) {
+    private void setSelectedView(SelectedViewEnum pos) {
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
 
         restoreButtons();
@@ -200,16 +190,14 @@ public class ButtonFragment extends Fragment {
             case Shop:
                 viewHolder.shopIcon.setImageResource(R.drawable.ic_store_red_36dp);
                 break;
+            case CategoryProduct:
+                viewHolder.categoryIcon.setImageResource(R.drawable.ic_layers_red_36dp);
+                break;
             default:
-                throw new UnsupportedOperationException("Unknown button position: " + pos);
+                throw new UnsupportedOperationException("Unknown view position: " + pos);
         }
 
-        mSelectedButton = pos;
-
-        // Save button selection in Shared Preferences
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-        editor.putInt(SELECTED_BUTTON, mSelectedButton);
-        editor.commit();
+        Settings.getInstance().setSelectedView(pos);
     }
 
     private void restoreButtons() {

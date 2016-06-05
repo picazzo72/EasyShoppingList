@@ -2,7 +2,7 @@ package com.dandersen.app.easyshoppinglist;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,25 +10,26 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
+import com.dandersen.app.easyshoppinglist.data.Settings;
+
 public class MainActivity extends AppCompatActivity
         implements ButtonFragment.Callback,
                    CategoryFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    private int mSelectedButton = 0;
-
     private boolean mTwoPaneLayout = false;
 
-    private final int CurrentList     = 0;
-    private final int ShoppingList    = 1;
-    private final int Category        = 2;
-    private final int Product         = 3;
-    private final int Shop            = 4;
+    private static Uri mCategoryProductsUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize settings
+        Settings.getInstance().initialize(PreferenceManager.getDefaultSharedPreferences(this));
+
         setContentView(R.layout.activity_main);
 
         // Toolbar
@@ -54,11 +55,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        if (mSelectedButton == Category) {
+        if (Settings.getInstance().getSelectedView() == SelectedViewEnum.Category) {
             ProductFragment fragment = (ProductFragment) getSupportFragmentManager().findFragmentByTag(ProductFragment.PRODUCT_FRAGMENT_TAG);
             if (fragment != null) {
                 if (fragment.mChildFragment) {
-                    onCategoryBtn();
+                    onCategory();
                     return;
                 }
             }
@@ -92,13 +93,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onShopBtn() {
-        mSelectedButton = Shop;
+    public void onShop() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.Shop);
     }
 
     @Override
-    public void onProductBtn() {
-        mSelectedButton = Product;
+    public void onProduct() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.Product);
 
         // Create a new Fragment to be placed in the activity layout
         ProductFragment fragment = new ProductFragment();
@@ -113,8 +114,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onCategoryBtn() {
-        mSelectedButton = Category;
+    public void onCategory() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.Category);
 
         // Create a new Fragment to be placed in the activity layout
         CategoryFragment fragment = new CategoryFragment();
@@ -129,19 +130,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onShoppingListBtn() {
-        mSelectedButton = ShoppingList;
+    public void onShoppingList() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.ShoppingList);
     }
 
     @Override
-    public void onCurrentListBtn() {
-        mSelectedButton = CurrentList;
+    public void onCurrentList() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.CurrentList);
     }
 
     @Override
     public void onCategoryItemSelected(Uri uri) {
+        mCategoryProductsUri = uri;
+
+        Settings.getInstance().setSelectedView(SelectedViewEnum.CategoryProduct);
+
+        onCategoryProduct();
+    }
+
+    @Override
+    public void onCategoryProduct() {
+        assert mCategoryProductsUri != null;
+
         Bundle arguments = new Bundle();
-        arguments.putParcelable(ProductFragment.PRODUCT_FRAGMENT_URI, uri);
+        arguments.putParcelable(ProductFragment.PRODUCT_FRAGMENT_URI, mCategoryProductsUri);
 
         ProductFragment productFragment = new ProductFragment();
         productFragment.setArguments(arguments);

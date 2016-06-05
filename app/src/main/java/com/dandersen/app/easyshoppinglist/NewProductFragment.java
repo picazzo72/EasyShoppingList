@@ -34,6 +34,7 @@ public class NewProductFragment extends Fragment
 
     private static final int CURSOR_CATEGORY_LOADER_ID = 0;
 
+
     public NewProductFragment() {
     }
 
@@ -55,7 +56,7 @@ public class NewProductFragment extends Fragment
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         if (cursor != null && cursor.getCount() > 0)  {
-            Spinner spinner = (Spinner) getActivity().findViewById(R.id.new_product_category);
+            final Spinner spinner = (Spinner) getActivity().findViewById(R.id.new_product_category);
 
             String[] adapterFromCols = new String[]{ ShoppingContract.CategoryEntry.COLUMN_NAME };
             int[] adapterToRowViews = new int[]{ android.R.id.text1 };
@@ -65,6 +66,23 @@ public class NewProductFragment extends Fragment
 
             spinner.setOnItemSelectedListener(this);
             spinner.requestFocus();
+
+            // Select category if this was sent from caller
+            Bundle arguments = getArguments();
+            if (arguments != null) {
+                String categoryName = arguments.getString(ProductFragment.CATEGORY_NAME_TAG);
+                if (categoryName != null) {
+                    class SelectSpinnerItem implements Runnable {
+                        String mCategory;
+                        SelectSpinnerItem(String category) { mCategory = category; }
+
+                        public void run() {
+                            setCategoryName(mCategory);
+                        }
+                    }
+                    spinner.post(new SelectSpinnerItem(categoryName));
+                }
+            }
         }
     }
 
@@ -175,6 +193,20 @@ public class NewProductFragment extends Fragment
             }
         }
         return categoryName;
+    }
+
+    void setCategoryName(String categoryName) {
+        Spinner spinner = (Spinner) getActivity().findViewById(R.id.new_product_category);
+        if (spinner != null) {
+            for (int i = 0, end = mSimpleCursorAdapter.getCount(); i < end; ++i) {
+                Cursor cursor = (Cursor) mSimpleCursorAdapter.getItem(i);
+                String curCategory = cursor.getString(1);
+                if (curCategory.equals(categoryName)) {
+                    spinner.setSelection(i);
+                    return;
+                }
+            }
+        }
     }
 
     @Override
