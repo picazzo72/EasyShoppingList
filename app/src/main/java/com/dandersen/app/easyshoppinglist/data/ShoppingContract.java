@@ -157,14 +157,29 @@ public class ShoppingContract {
         // Table name
         public static final String TABLE_NAME = PATH_SHOP;
 
+        // Place Id
+        public static final String COLUMN_PLACE_ID = "place_id";
+
+        // Location - latitude , longtitude
+        public static final String COLUMN_LOCATION = "location";
+
         // Name
         public static final String COLUMN_NAME = "shop_name";
 
-        // Address
-        public static final String COLUMN_ADDRESS = "address";
+        // Formatted address
+        public static final String COLUMN_FORMATTED_ADDRESS = "formatted_address";
+
+        // Street
+        public static final String COLUMN_STREET = "street";
+
+        // Street number
+        public static final String COLUMN_STREET_NUMBER = "street_number";
 
         // City
         public static final String COLUMN_CITY = "city";
+
+        // Postal code
+        public static final String COLUMN_POSTAL_CODE = "postal_code";
 
         // State
         public static final String COLUMN_STATE = "state";
@@ -172,8 +187,14 @@ public class ShoppingContract {
         // Country
         public static final String COLUMN_COUNTRY = "country";
 
-        // Homepage
-        public static final String COLUMN_HOMEPAGE = "homepage";
+        // Phone number
+        public static final String COLUMN_PHONE_NUMBER = "phone_number";
+
+        // Website
+        public static final String COLUMN_WEBSITE = "website";
+
+        // Date, stored as long in milliseconds since the epoch
+        public static final String COLUMN_CREATED = "created";
 
         public static Uri buildShopUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

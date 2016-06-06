@@ -1,14 +1,9 @@
 package com.dandersen.app.easyshoppinglist.data;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Created by Dan on 23-05-2016.
@@ -18,7 +13,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
     private static final String LOG_TAG = ShoppingDbHelper.class.getSimpleName();
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 8;
 
     static final String DATABASE_NAME = "shopping.db";
 
@@ -97,14 +92,29 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_SHOP_TABLE = "CREATE TABLE " + ShoppingContract.ShopEntry.TABLE_NAME + " (" +
                 ShoppingContract.ShopEntry._ID + " INTEGER PRIMARY KEY," +
 
-                // Name of owner
+                // Place Id
+                ShoppingContract.ShopEntry.COLUMN_PLACE_ID + " TEXT NOT NULL, " +
+
+                // Location
+                ShoppingContract.ShopEntry.COLUMN_LOCATION + " TEXT DEFAULT NULL, " +
+
+                // Shop name
                 ShoppingContract.ShopEntry.COLUMN_NAME + " TEXT NOT NULL, " +
 
-                // Address
-                ShoppingContract.ShopEntry.COLUMN_ADDRESS + " TEXT NOT NULL, " +
+                // Formatted address
+                ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS + " TEXT DEFAULT NULL, " +
+
+                // Street
+                ShoppingContract.ShopEntry.COLUMN_STREET + " TEXT DEFAULT NULL, " +
+
+                // Street number
+                ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER + " TEXT DEFAULT NULL, " +
 
                 // City
-                ShoppingContract.ShopEntry.COLUMN_CITY + " TEXT NOT NULL, " +
+                ShoppingContract.ShopEntry.COLUMN_CITY + " TEXT DEFAULT NULL, " +
+
+                // Postal code
+                ShoppingContract.ShopEntry.COLUMN_POSTAL_CODE + " TEXT DEFAULT NULL, " +
 
                 // State
                 ShoppingContract.ShopEntry.COLUMN_STATE + " TEXT DEFAULT NULL, " +
@@ -112,8 +122,19 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 // Country
                 ShoppingContract.ShopEntry.COLUMN_COUNTRY + " TEXT DEFAULT NULL, " +
 
-                // Homepage
-                ShoppingContract.ShopEntry.COLUMN_HOMEPAGE + " TEXT DEFAULT NULL);";
+                // Phone number
+                ShoppingContract.ShopEntry.COLUMN_PHONE_NUMBER + " TEXT DEFAULT NULL, " +
+
+                // Website
+                ShoppingContract.ShopEntry.COLUMN_WEBSITE + " TEXT DEFAULT NULL, " +
+
+                // Date created, stored as long in milliseconds since the epoch
+                ShoppingContract.ShopEntry.COLUMN_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+
+                // To assure the application have just one shop with a certain PLACE_ID
+                // we create a UNIQUE constraint with REPLACE strategy
+                " UNIQUE (" + ShoppingContract.ShopEntry.COLUMN_PLACE_ID + ") ON CONFLICT REPLACE);";
+
 
 
         final String SQL_CREATE_SHOPPING_LIST_PRODUCTS_TABLE = "CREATE TABLE " +

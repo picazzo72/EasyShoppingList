@@ -7,17 +7,27 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
 import com.dandersen.app.easyshoppinglist.data.Settings;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
 public class MainActivity extends AppCompatActivity
-        implements ButtonFragment.Callback,
-                   CategoryFragment.Callback {
+        implements  GoogleApiClient.ConnectionCallbacks,
+                    GoogleApiClient.OnConnectionFailedListener,
+                    ButtonFragment.Callback,
+                    CategoryFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
+
+    private GoogleApiClient mGoogleApiClient;
 
     private boolean mTwoPaneLayout = false;
 
@@ -31,6 +41,15 @@ public class MainActivity extends AppCompatActivity
         Settings.getInstance().initialize(PreferenceManager.getDefaultSharedPreferences(this));
 
         setContentView(R.layout.activity_main);
+
+        // Create an instance of GoogleApiClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+        }
 
         // Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -95,6 +114,17 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onShop() {
         Settings.getInstance().setSelectedView(SelectedViewEnum.Shop);
+
+        // Create a new Fragment to be placed in the activity layout
+        ShopFragment fragment = new ShopFragment();
+
+        // In case this activity was started with special instructions from an
+        // Intent, pass the Intent's extras to the fragment as arguments
+        fragment.setArguments(getIntent().getExtras());
+
+        // Add the fragment to the 'fragment_container' FrameLayout
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment).commit();
     }
 
     @Override
@@ -172,6 +202,54 @@ public class MainActivity extends AppCompatActivity
             transaction.replace(R.id.fragment_container, productFragment, ProductFragment.PRODUCT_FRAGMENT_TAG)
                     .commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Connect the client.
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        // Disconnecting the client invalidates it.
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.v(LOG_TAG, "DSA LOG - Connected to Google Location Api");
+
+        try {
+            android.location.Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+            if (location != null) {
+                String latitude = Double.toString(location.getLatitude());
+                String longtitude = Double.toString(location.getLongitude());
+
+                Log.v(LOG_TAG, "DSA LOG - Latitude: " + latitude + " - Longtitude: " + longtitude);
+
+                FetchShopTask fetchShopTask = new FetchShopTask(this);
+
+                // Execute fetch weather task
+                fetchShopTask.execute(latitude + "," + longtitude);
+            }
+        }
+        catch (SecurityException ex) {
+            Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(LOG_TAG, "DSA LOG - GoogleApiClient connection has been suspend");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.i(LOG_TAG, "DSA LOG - GoogleApiClient connection has failed");
     }
 
 }

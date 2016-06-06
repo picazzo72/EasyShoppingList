@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="http://schemas.android.com/tools">
     <string name="app_name">EasyShoppingList</string>
 
     // Button names
@@ -6,7 +6,7 @@
     <string name="button_shopping_lists">Shopping Lists</string>
     <string name="button_categories">Categories</string>
     <string name="button_products">Products</string>
-    <string name="button_shop">Shops</string>
+    <string name="button_shop">Supermarkets</string>
 
     // Settings
     <string name="action_settings">Settings</string>
@@ -22,4 +22,7 @@
     <string name="dialog_new_product">Enter new product name</string>
     <string name="dialog_create">Create</string>
     <string name="dialog_cancel">Cancel</string>
+    
+    <string name="dialog_import_shops_title">Create supermarket entries</string>
+    <string name="dialog_import_shops_question"><xliff:g id="number_of_shops">%1$s</xliff:g> new supermarkets found. Should these be created?</string>
 </resources>

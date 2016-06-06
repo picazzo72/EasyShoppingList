@@ -148,4 +148,24 @@ public class Utilities {
 
         populateDatabase(db);
     }
+
+    public static String buildShopAddress(String street,
+                                          String streetNumber,
+                                          String city,
+                                          String formattedAddress) {
+        String res = "";
+        if (street == null || city == null) {
+            res = formattedAddress;
+        }
+        else {
+            res = street;
+            if (streetNumber != null) {
+                res += " " + streetNumber;
+            }
+            if (city != null) {
+                res += ", " + city;
+            }
+        }
+        return res;
+    }
 }

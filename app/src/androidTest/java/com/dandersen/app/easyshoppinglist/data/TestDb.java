@@ -161,7 +161,7 @@ public class TestDb extends AndroidTestCase {
             final HashSet<String> columnHashSet = new HashSet<String>();
             columnHashSet.add(ShoppingContract.ShopEntry._ID);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_NAME);
-            columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_ADDRESS);
+            columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_STREET);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_CITY);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_STATE);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_COUNTRY);

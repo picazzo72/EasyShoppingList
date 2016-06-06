@@ -89,7 +89,7 @@ public class TestUtilities extends AndroidTestCase {
         // Create a new map of values, where column names are the keys
         ContentValues testValues = new ContentValues();
         testValues.put(ShoppingContract.ShopEntry.COLUMN_NAME, "Donald Duck Disney Store");
-        testValues.put(ShoppingContract.ShopEntry.COLUMN_ADDRESS, "1313 Webfoot Walk");
+        testValues.put(ShoppingContract.ShopEntry.COLUMN_STREET, "1313 Webfoot Walk");
         testValues.put(ShoppingContract.ShopEntry.COLUMN_CITY, "Duckburg");
         testValues.put(ShoppingContract.ShopEntry.COLUMN_STATE, "Calisota");
         testValues.put(ShoppingContract.ShopEntry.COLUMN_COUNTRY, "USA");

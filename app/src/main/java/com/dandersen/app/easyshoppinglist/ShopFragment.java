@@ -8,8 +8,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,64 +23,59 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 /**
  * Created by Dan on 28-05-2016.
  */
-public class ProductFragment extends Fragment
+public class ShopFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private final String LOG_TAG = ProductFragment.class.getSimpleName();
+    private final String LOG_TAG = ShopFragment.class.getSimpleName();
 
     // Tags for bundle
-    public static String PRODUCT_ID_TAG = "product_id";
-    public static String CATEGORY_NAME_TAG = "category_name";
+    public static String SHOP_ID_TAG = "shop_id";
 
     // Tag for fragment
-    public static String PRODUCT_FRAGMENT_TAG = "ProductFragment";
+    public static String SHOP_FRAGMENT_TAG = "ShopFragment";
 
-    private ProductAdapter mProductAdapter;
+    private ShopAdapter mShopAdapter;
 
-    public boolean mChildFragment = false;
     private boolean mTwoPaneLayout = false;
 
-    // Our product list view
+    // Our shop list view
     private ListView mListView;
 
     // Keeping track of the selected item
     private int mPosition = ListView.INVALID_POSITION;
 
-    // Product id to select after load has finished
-    private long mProductId = 0;
+    // Shop id to select after load has finished
+    private long mShopId = 0;
 
     // Tag for save instance bundle
     private static final String SELECTED_KEY = "selected_position";
 
-    // Tag for saving the URI for the product fragment in single pane (phone) mode
-    static final String PRODUCT_FRAGMENT_URI = "URI";
-
     private static final int CURSOR_LOADER_ID = 0;
 
-    // The Uri from caller, or by default all products Uri
-    private Uri mUri;
-
-    private boolean mRestartingLoader = false;
-
-    // For the category view we're showing only a small subset of the stored data.
+    // For the shop view we're showing only a small subset of the stored data.
     // Specify the columns we need.
-    private static final String[] PRODUCT_COLUMNS = {
+    private static final String[] SHOP_COLUMNS = {
             // In this case the id needs to be fully qualified with a table name, since
             // the content provider joins the location & weather tables in the background
             // (both have an _id column)
             // On the one hand, that's annoying.  On the other, you can search the weather table
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
-            ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
-            ShoppingContract.ProductEntry.COLUMN_NAME,
-            ShoppingContract.CategoryEntry.COLUMN_NAME
+            ShoppingContract.ShopEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
+            ShoppingContract.ShopEntry.COLUMN_NAME,
+            ShoppingContract.ShopEntry.COLUMN_STREET,
+            ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER,
+            ShoppingContract.ShopEntry.COLUMN_CITY,
+            ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS
     };
 
-    // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
-    // must change.
-    static final int COL_PRODUCT_ID = 0;
-    static final int COL_PRODUCT_NAME = 1;
-    static final int COL_CATEGORY_NAME = 2;
+    // These indices are tied to SHOP_COLUMNS. If this changes, these indices must change.
+    static final int COL_SHOP_ID = 0;
+    static final int COL_SHOP_NAME = 1;
+    static final int COL_SHOP_STREET = 2;
+    static final int COL_SHOP_STREET_NUMBER = 3;
+    static final int COL_SHOP_CITY = 4;
+    static final int COL_FORMATTED_ADDRESS = 5;
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -91,19 +84,19 @@ public class ProductFragment extends Fragment
      */
     public interface Callback {
         /**
-         * ProductFragmentCallback for when an item has been selected.
+         * ShopFragmentCallback for when an item has been selected.
          */
         public void onItemSelected(Uri dateUri);
     }
 
 
-    public ProductFragment() {
+    public ShopFragment() {
     }
 
     public void setTwoPaneLayout(boolean twoPaneLayout) {
         mTwoPaneLayout = twoPaneLayout;
-        if (mProductAdapter != null) {
-            mProductAdapter.setTwoPaneLayout(twoPaneLayout);
+        if (mShopAdapter != null) {
+            mShopAdapter.setTwoPaneLayout(twoPaneLayout);
         }
     }
 
@@ -117,29 +110,16 @@ public class ProductFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Get Uri from the arguments sent from the caller
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            mUri = arguments.getParcelable(ProductFragment.PRODUCT_FRAGMENT_URI);
-        }
-        if (mUri == null) {
-            mUri = ShoppingContract.ProductEntry.CONTENT_WITH_CATEGORY_URI;
-            mChildFragment = false;
-        }
-        else {
-            mChildFragment = true;
-        }
-
         // The CursorAdapter will take data from a source and
         // use it to populate the ListView it's attached to
-        mProductAdapter = new ProductAdapter(getActivity(), null, 0);
-        mProductAdapter.setTwoPaneLayout(mTwoPaneLayout);
+        mShopAdapter = new ShopAdapter(getActivity(), null, 0);
+        mShopAdapter.setTwoPaneLayout(mTwoPaneLayout);
 
-        View rootView = inflater.inflate(R.layout.fragment_product, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_shop, container, false);
 
         // Get a reference to the ListView, and attach this adapter to it
-        mListView = (ListView) rootView.findViewById(R.id.listview_products);
-        mListView.setAdapter(mProductAdapter);
+        mListView = (ListView) rootView.findViewById(R.id.listview_shops);
+        mListView.setAdapter(mShopAdapter);
 
 //        // Create on item click listener for the ListView
 //        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -171,20 +151,9 @@ public class ProductFragment extends Fragment
         }
 
         // Prepare the loader.  Either re-connect with an existing one, or start a new one.
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
 
         return rootView;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(mChildFragment);
-            actionBar.setDisplayShowHomeEnabled(mChildFragment);
-        }
     }
 
     @Override
@@ -192,7 +161,7 @@ public class ProductFragment extends Fragment
         // This is called when the last Cursor provided to onLoadFinished()
         // above is about to be closed.  We need to make sure we are no
         // longer using it.
-        mProductAdapter.swapCursor(null);
+        mShopAdapter.swapCursor(null);
     }
 
     @Override
@@ -200,14 +169,14 @@ public class ProductFragment extends Fragment
         Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
 
         // Select first item, last selected or new product if one of these are available
-        if (mPosition != ListView.INVALID_POSITION || mProductId > 0) {
+        if (mPosition != ListView.INVALID_POSITION || mShopId > 0) {
             class SelectListItem implements Runnable {
                 int mListSelection;
-                long mProductId;
-                SelectListItem(int sel, long productId) { mListSelection = sel; mProductId = productId; }
+                long mShopId;
+                SelectListItem(int sel, long shopId) { mListSelection = sel; mShopId = shopId; }
                 public void run() {
-                    if (mProductId > 0) {
-                        mListSelection = mProductAdapter.getItemPosition(mProductId);
+                    if (mShopId > 0) {
+                        mListSelection = mShopAdapter.getItemPosition(mShopId);
                     }
                     if (mListSelection < mListView.getCount()) {
                         mPosition = mListSelection;
@@ -221,24 +190,26 @@ public class ProductFragment extends Fragment
                     }
                 }
             }
-            mListView.post(new SelectListItem(mPosition, mProductId));
+            mListView.post(new SelectListItem(mPosition, mShopId));
         }
 
         // Swap the new cursor in.  (The framework will take care of closing the
         // old cursor once we return.)
-        mProductAdapter.swapCursor(data);
+        mShopAdapter.swapCursor(data);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle arguments) {
-        // Sort order: Acending, by name
-        String sortOrder = PRODUCT_COLUMNS[COL_PRODUCT_NAME] + " ASC";
+        // Sort order: Ascending, by name
+        String sortOrder = SHOP_COLUMNS[COL_SHOP_NAME] + " ASC";
 
-        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for product list: " + mUri.toString());
+        Uri uri = ShoppingContract.ShopEntry.CONTENT_URI;
+
+        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for shop list: " + uri.toString());
 
         return new CursorLoader(getActivity(),
-                mUri,                  // URI
-                PRODUCT_COLUMNS,       // projection
+                uri,                   // URI
+                SHOP_COLUMNS,          // projection
                 null,                  // where
                 null,                  // binds
                 sortOrder);
@@ -257,24 +228,16 @@ public class ProductFragment extends Fragment
         int id = item.getItemId();
 
         if (id == R.id.action_new) {
-            createNewProduct();
-            return true;
-        }
-        else if (id == android.R.id.home) {
-            ((ButtonFragment.Callback) getActivity()).onCategory();
+            createNewShop();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void createNewProduct() {
+    private void createNewShop() {
         // Create and start explicit intent
         Intent intent = new Intent(getActivity(), NewProductActivity.class);
-        if (mChildFragment) {
-            String category = ShoppingContract.ProductEntry.getCategoryFromUri(mUri);
-            intent.putExtra(CATEGORY_NAME_TAG, category);
-        }
         int requestCode = 1;
         startActivityForResult(intent, requestCode);
     }
@@ -285,8 +248,8 @@ public class ProductFragment extends Fragment
             super.onActivityResult(requestCode, resultCode, data);
 
             if (data != null) {
-                mProductId = data.getLongExtra(ProductFragment.PRODUCT_ID_TAG, 0);
-                if (mProductId > 0) {
+                mShopId = data.getLongExtra(ShopFragment.SHOP_ID_TAG, 0);
+                if (mShopId > 0) {
                     getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
                 }
             }
