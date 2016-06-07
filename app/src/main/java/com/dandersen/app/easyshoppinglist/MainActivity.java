@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    private GoogleApiClient mGoogleApiClient;
+    private static GoogleApiClient mGoogleApiClient;
 
     private boolean mTwoPaneLayout = false;
 

@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
@@ -45,11 +46,19 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         }
         String location = params[0];
 
-        // Request nearby places from Google API
-        String placesJsonStr = getGoogleApiResponse(buildNearbySearchUri(location));
+        // Find nearby place ids
+        String nextPageToken = null;
+        ArrayList nearbyPlaces = new ArrayList();
 
-        // Parse nearby places for the place ids
-        ArrayList nearbyPlaces = parseGoogleNearbyPlacesResult(placesJsonStr);
+        do {
+            // Request nearby places from Google API
+            String placesJsonStr = getGoogleApiResponse(buildNearbySearchUri(location, nextPageToken));
+
+            // Parse nearby places for the place ids
+            nextPageToken = parseGoogleNearbyPlacesResult(placesJsonStr, nearbyPlaces);
+        } while (nextPageToken != null);
+
+        if (nearbyPlaces.isEmpty()) return null;
 
         // Fetch place ids from database
         HashSet<String> placeIdsInDb = new HashSet<>();
@@ -119,22 +128,29 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 .show();
     }
 
-    private Uri buildNearbySearchUri(String location) {
+    private Uri buildNearbySearchUri(String location, @Nullable String nextPageToken) {
         // Construct the URL for the Google Places API query
         final String PLACES_BASE_URL        = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
         final String LOCATION_PARAM         = "location";
         final String TYPE_PARAM             = "type";
         final String RADIUS_PARAM           = "radius";
         final String APP_ID                 = "key";
-        final String RADIUS_VALUE           = "20000";
+        final String RADIUS_VALUE           = "15000";
         final String TYPE_VALUE             = "grocery_or_supermarket";
+        final String PAGE_TOKEN             = "page_token";
 
-        return Uri.parse(PLACES_BASE_URL).buildUpon()
-                .appendQueryParameter(LOCATION_PARAM, location)
-                .appendQueryParameter(RADIUS_PARAM, RADIUS_VALUE)
-                .appendQueryParameter(TYPE_PARAM, TYPE_VALUE)
-                .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY)
-                .build();
+        if (nextPageToken == null) {
+            return Uri.parse(PLACES_BASE_URL).buildUpon()
+                    .appendQueryParameter(LOCATION_PARAM, location)
+                    .appendQueryParameter(RADIUS_PARAM, RADIUS_VALUE)
+                    .appendQueryParameter(TYPE_PARAM, TYPE_VALUE)
+                    .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY).build();
+        }
+        else {
+            return Uri.parse(PLACES_BASE_URL).buildUpon()
+                    .appendQueryParameter(PAGE_TOKEN, nextPageToken)
+                    .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY).build();
+        }
     }
 
     private Uri buildPlaceDetailsUri(String placeId) {
@@ -210,16 +226,23 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         return placesJsonStr;
     }
 
-    private ArrayList parseGoogleNearbyPlacesResult(final String response) {
-        final String RESULTS        = "results";
-        final String PLACE_ID       = "place_id";
+    private String parseGoogleNearbyPlacesResult(final String response, ArrayList nearbyPlaces) {
+        final String RESULTS            = "results";
+        final String PLACE_ID           = "place_id";
+        final String NEXT_PAGE_TOKEN    = "next_page_token";
 
-        ArrayList res = new ArrayList();
+        String nextPageToken = null;
         try {
-            // make a jsonObject in order to parse the response
+            // Make a jsonObject in order to parse the response
             JSONObject jsonObject = new JSONObject(response);
 
-            // make a jsonObject in order to parse the response
+            // Try and find next_page_token
+            String tmp = jsonObject.optString(NEXT_PAGE_TOKEN);
+            if (!tmp.isEmpty()) {
+                nextPageToken = tmp;
+            }
+
+            // Locate place ids
             if (jsonObject.has(RESULTS)) {
                 JSONArray jsonArray = jsonObject.getJSONArray(RESULTS);
 
@@ -227,7 +250,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                     if (jsonArray.getJSONObject(i).has(PLACE_ID)) {
                         String placeId = jsonArray.getJSONObject(i).optString(PLACE_ID);
                         if (!placeId.isEmpty()) {
-                            res.add(placeId);
+                            nearbyPlaces.add(placeId);
                         }
                     }
                 }
@@ -235,9 +258,9 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         } catch (Exception e) {
             Log.e(LOG_TAG, "parseGoogleNearbyPlacesResult exception", e);
             e.printStackTrace();
-            return new ArrayList();
         }
-        return res;
+
+        return nextPageToken;
     }
 
     ContentValues parseGooglePlaceDetailsResult(final String response) {
