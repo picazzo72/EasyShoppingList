@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 
@@ -19,10 +20,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Created by dandersen on 05-06-2016.
@@ -33,8 +38,34 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     private final Context mContext;
 
+    private String mErrorMessage = null;
+
+    // Create a trust manager that does not validate certificate chains like the
+    private static TrustManager[] sTrustManager = new TrustManager[] {
+            new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    //No need to implement.
+                }
+                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    //No need to implement.
+                }
+            }
+    };
+
     public FetchShopTask(Context context) {
         mContext = context;
+
+        // Install the all-trusting trust manager
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, sTrustManager, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     @Override
@@ -105,7 +136,12 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     @Override
     protected void onPostExecute(ContentValues[] contentValuesList) {
-        if (contentValuesList == null) return;
+        if (contentValuesList == null) {
+            if (mErrorMessage != null) {
+                Toast.makeText(mContext, mErrorMessage, Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
 
         final ContentValues[] fContentValuesList = contentValuesList;
 
@@ -137,20 +173,19 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         final String APP_ID                 = "key";
         final String RADIUS_VALUE           = "15000";
         final String TYPE_VALUE             = "grocery_or_supermarket";
-        final String PAGE_TOKEN             = "page_token";
+        final String PAGE_TOKEN             = "pagetoken";
 
-        if (nextPageToken == null) {
-            return Uri.parse(PLACES_BASE_URL).buildUpon()
-                    .appendQueryParameter(LOCATION_PARAM, location)
-                    .appendQueryParameter(RADIUS_PARAM, RADIUS_VALUE)
-                    .appendQueryParameter(TYPE_PARAM, TYPE_VALUE)
-                    .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY).build();
+        Uri.Builder uriBuilder = Uri.parse(PLACES_BASE_URL).buildUpon()
+                .appendQueryParameter(LOCATION_PARAM, location)
+                .appendQueryParameter(RADIUS_PARAM, RADIUS_VALUE)
+                .appendQueryParameter(TYPE_PARAM, TYPE_VALUE)
+                .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY);
+
+        if (nextPageToken != null) {
+            uriBuilder.appendQueryParameter(PAGE_TOKEN, nextPageToken);
         }
-        else {
-            return Uri.parse(PLACES_BASE_URL).buildUpon()
-                    .appendQueryParameter(PAGE_TOKEN, nextPageToken)
-                    .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY).build();
-        }
+
+        return uriBuilder.build();
     }
 
     private Uri buildPlaceDetailsUri(String placeId) {
@@ -167,21 +202,20 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     private String getGoogleApiResponse(Uri builtUri) {
         // These need to be declared outside the try/catch so they can be closed in the finally block.
-        HttpURLConnection urlConnection = null;
+        HttpsURLConnection urlConnection = null;
         BufferedReader reader = null;
 
         // Will contain the raw JSON response as a string.
         String placesJsonStr = null;
 
         try {
-
             URL url = new URL(builtUri.toString());
 
             // Log URL
             Log.v(LOG_TAG, "DSA LOG - Built URL for Google Places API " + url);
 
             // Create the request to Google Places, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection = (HttpsURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             urlConnection.connect();
 
@@ -210,6 +244,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             }
             placesJsonStr = buffer.toString();
         } catch (IOException e) {
+            mErrorMessage = e.toString();
             Log.e(LOG_TAG, "DSA LOG - doInBackground - IOException " + e.toString(), e);
         } finally {
             if (urlConnection != null) {
@@ -256,6 +291,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 }
             }
         } catch (Exception e) {
+            mErrorMessage = e.toString();
             Log.e(LOG_TAG, "parseGoogleNearbyPlacesResult exception", e);
             e.printStackTrace();
         }
@@ -293,6 +329,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 contentValues.put(ShoppingContract.ShopEntry.COLUMN_WEBSITE, jsonResult.optString(WEBSITE));
             }
         } catch (Exception e) {
+            mErrorMessage = e.toString();
             Log.e(LOG_TAG, "parseGooglePlaceDetailsResult exception", e);
             e.printStackTrace();
         }
@@ -343,6 +380,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 }
             }
         } catch (Exception e) {
+            mErrorMessage = e.toString();
             Log.e(LOG_TAG, "parseAddressComponents exception", e);
             e.printStackTrace();
         }
@@ -367,6 +405,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 }
             }
         } catch (Exception e) {
+            mErrorMessage = e.toString();
             Log.e(LOG_TAG, "parseGeometry exception", e);
             e.printStackTrace();
         }
