@@ -13,8 +13,9 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
-import com.dandersen.app.easyshoppinglist.data.Settings;
+import com.dandersen.app.easyshoppinglist.prefs.Settings;
 
+import com.dandersen.app.easyshoppinglist.prefs.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
     private static GoogleApiClient mGoogleApiClient;
+    private FetchShopTask mFetchShopTask = null;
 
     private boolean mTwoPaneLayout = false;
 
@@ -38,17 +40,24 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         // Initialize settings
-        Settings.getInstance().initialize(PreferenceManager.getDefaultSharedPreferences(this));
+        Settings.getInstance().initialize(this, PreferenceManager.getDefaultSharedPreferences(this));
 
         setContentView(R.layout.activity_main);
 
-        // Create an instance of GoogleApiClient.
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
+        mFetchShopTask = (FetchShopTask) getLastCustomNonConfigurationInstance();
+
+        if (mFetchShopTask == null) {
+            // Create an instance of GoogleApiClient.
+            if (mGoogleApiClient == null) {
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
+                        .addApi(LocationServices.API)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this)
+                        .build();
+            }
+        }
+        else {
+            mFetchShopTask.attach(this);
         }
 
         // Toolbar
@@ -70,6 +79,30 @@ public class MainActivity extends AppCompatActivity
 //            getSupportFragmentManager().beginTransaction()
 //                    .add(R.id.fragment_container, firstFragment).commit();
 //        }
+    }
+
+    /**
+     * Used to save the AsyncTask when this Activity is begin destroyed to give
+     * to the new MainActivity. This handles eg. screen rotation.
+     * @return: Any Object holding the desired state to propagate to the next activity instance. In this case the FetchShopTask.
+     */
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (mFetchShopTask != null) {
+            mFetchShopTask.detach();
+
+            return mFetchShopTask;
+        }
+        return super.onRetainCustomNonConfigurationInstance();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (mFetchShopTask != null) {
+            mFetchShopTask.detach();
+        }
     }
 
     @Override
@@ -180,7 +213,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCategoryProduct() {
-        assert mCategoryProductsUri != null;
+        if (mCategoryProductsUri == null) throw new AssertionError("Category products URI cannot be null");
 
         Bundle arguments = new Bundle();
         arguments.putParcelable(ProductFragment.PRODUCT_FRAGMENT_URI, mCategoryProductsUri);
@@ -231,10 +264,10 @@ public class MainActivity extends AppCompatActivity
 
                 Log.v(LOG_TAG, "DSA LOG - Latitude: " + latitude + " - Longtitude: " + longtitude);
 
-                FetchShopTask fetchShopTask = new FetchShopTask(this);
+                mFetchShopTask = new FetchShopTask(this, getContentResolver());
 
                 // Execute fetch weather task
-                fetchShopTask.execute(latitude + "," + longtitude);
+                mFetchShopTask.execute(latitude + "," + longtitude);
             }
         }
         catch (SecurityException ex) {

@@ -1,11 +1,12 @@
-package com.dandersen.app.easyshoppinglist;
+package com.dandersen.app.easyshoppinglist.prefs;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+
+import com.dandersen.app.easyshoppinglist.R;
 
 /**
  * Created by dandersen on 29-05-2016.
@@ -25,7 +26,9 @@ public class SettingsFragment extends PreferenceFragment
         addPreferencesFromResource(R.xml.pref_general);
 
         // For all preferences, attach an OnPreferenceChangeListener so the UI can be updated when the preference changes
-        //bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_key_reset_product_database)));
+        Preference preference = findPreference(getString(R.string.pref_key_nearby_radius));
+        preference.setOnPreferenceChangeListener(this);
+        onPreferenceChange(preference, Settings.getInstance().getNearbySearchRadius());
     }
 
     /**
@@ -33,7 +36,7 @@ public class SettingsFragment extends PreferenceFragment
      * Also fires the listener once, to initialize the summary (so it shows up before the value
      * is changed.)
      */
-    private void bindPreferenceSummaryToValue(Preference preference) {
+    private void bindStringPreferenceSummaryToValue(Preference preference) {
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(this);
 

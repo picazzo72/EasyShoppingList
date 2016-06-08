@@ -11,7 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
-import com.dandersen.app.easyshoppinglist.data.Settings;
+import com.dandersen.app.easyshoppinglist.prefs.Settings;
 
 /**
  * Created by Dan on 27-05-2016.

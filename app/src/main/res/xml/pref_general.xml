@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.dandersen.app.easyshoppinglist.OptionResetProductDatabase
+    <com.dandersen.app.easyshoppinglist.prefs.OptionResetProductDatabase
         android:key="@string/pref_key_reset_product_database"
         android:dialogIcon="@android:drawable/ic_dialog_alert"
         android:title="Reset product database"
@@ -12,4 +13,13 @@
         android:positiveButtonText="Reset database"
         android:negativeButtonText="Cancel"/>
 
+    <com.dandersen.app.easyshoppinglist.prefs.NearbySearchRadiusNumberPickerPreference
+        android:key="@string/pref_key_nearby_radius"
+        android:id="@+id/pref_num_picker"
+        android:dialogIcon="@android:drawable/ic_dialog_info"
+        android:title="Select radius for nearby search"
+        android:dialogMessage="Select radius for nearby search."
+        android:positiveButtonText="OK"
+        android:negativeButtonText="Cancel"
+        app:picker_values="@array/nearbySearchRadiusValues"/>
 </PreferenceScreen>

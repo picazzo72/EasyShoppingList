@@ -1,4 +1,4 @@
-package com.dandersen.app.easyshoppinglist;
+package com.dandersen.app.easyshoppinglist.prefs;
 
 import android.annotation.TargetApi;
 import android.content.Intent;

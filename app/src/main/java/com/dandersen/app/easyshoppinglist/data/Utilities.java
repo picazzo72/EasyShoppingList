@@ -144,7 +144,7 @@ public class Utilities {
 
         // Get reference to writable database
         SQLiteDatabase db = new ShoppingDbHelper(context).getWritableDatabase();
-        assert db.isOpen() == true;
+        if (!db.isOpen()) throw new AssertionError("Database is not open");
 
         populateDatabase(db);
     }

@@ -1,7 +1,7 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
@@ -11,6 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.dandersen.app.easyshoppinglist.prefs.Settings;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 
 import org.json.JSONArray;
@@ -36,8 +37,10 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     private final String LOG_TAG = FetchShopTask.class.getSimpleName();
 
-    private final Context mContext;
+    private MainActivity mActivity;
+    private ContentResolver mContentResolver;
 
+    // Error message to display to the user when control is transferred to ui thread.
     private String mErrorMessage = null;
 
     // Create a trust manager that does not validate certificate chains like the
@@ -55,8 +58,9 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             }
     };
 
-    public FetchShopTask(Context context) {
-        mContext = context;
+    public FetchShopTask(MainActivity activity, ContentResolver contentResolver) {
+        mActivity = activity;
+        mContentResolver = contentResolver;
 
         // Install the all-trusting trust manager
         try {
@@ -64,13 +68,32 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             sc.init(null, sTrustManager, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception e) {
-            System.out.println(e);
+            mErrorMessage = e.toString();
+            Log.e(LOG_TAG, "DSA LOG - FetchShopTask exception " + e.toString(), e);
+            e.printStackTrace();
         }
+    }
+
+    /**
+     * The activity calls detach when the activity is being destroyed.
+     */
+    void detach() {
+        mActivity = null;
+    }
+
+    /**
+     * Used the attach the activity to this AsyncTask on re-creation of the activity class
+     * managing this task. attach is called by new instance of Activity after detach
+     * from destroyed instance.
+     * @param activity The activity managing this task.
+     */
+    void attach(MainActivity activity) {
+        mActivity = activity;
     }
 
     @Override
     protected ContentValues[] doInBackground(String... params) {
-        // If there's no zip code, there's nothing to look up.  Verify size of params.
+        // If there's no location, there's nothing to look up.  Verify size of params.
         if (params.length == 0) {
             Log.v(LOG_TAG, "DSA LOG - doInBackground - no params");
             return null;
@@ -93,7 +116,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
         // Fetch place ids from database
         HashSet<String> placeIdsInDb = new HashSet<>();
-        Cursor c = mContext.getContentResolver().query(
+        Cursor c = mContentResolver.query(
                 ShoppingContract.ShopEntry.CONTENT_URI,
                 new String[] { ShoppingContract.ShopEntry.COLUMN_PLACE_ID },
                 null, // cols for "where" clause
@@ -103,7 +126,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         if (c.moveToFirst()) {
             do {
                 String placeId = c.getString(0);
-                assert !placeId.isEmpty();
+                if (placeId.isEmpty()) throw new AssertionError("Place id cannot be empty");
                 placeIdsInDb.add(placeId);
             } while (c.moveToNext());
         }
@@ -136,22 +159,24 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     @Override
     protected void onPostExecute(ContentValues[] contentValuesList) {
+        if (mActivity == null) return;
+
         if (contentValuesList == null) {
             if (mErrorMessage != null) {
-                Toast.makeText(mContext, mErrorMessage, Toast.LENGTH_LONG).show();
+                Toast.makeText(mActivity, mErrorMessage, Toast.LENGTH_LONG).show();
             }
             return;
         }
 
         final ContentValues[] fContentValuesList = contentValuesList;
 
-        new AlertDialog.Builder(mContext)
+        new AlertDialog.Builder(mActivity)
                 .setCancelable(true)
                 .setTitle(R.string.dialog_import_shops_title)
-                .setMessage(mContext.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
+                .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        int insertCount = mContext.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
+                        int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
                         Log.i(LOG_TAG, insertCount + " shop entries added to database");
                     }
                 })
@@ -171,13 +196,12 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         final String TYPE_PARAM             = "type";
         final String RADIUS_PARAM           = "radius";
         final String APP_ID                 = "key";
-        final String RADIUS_VALUE           = "15000";
         final String TYPE_VALUE             = "grocery_or_supermarket";
         final String PAGE_TOKEN             = "pagetoken";
 
         Uri.Builder uriBuilder = Uri.parse(PLACES_BASE_URL).buildUpon()
                 .appendQueryParameter(LOCATION_PARAM, location)
-                .appendQueryParameter(RADIUS_PARAM, RADIUS_VALUE)
+                .appendQueryParameter(RADIUS_PARAM, Integer.toString(Settings.getInstance().getNearbySearchRadius()))
                 .appendQueryParameter(TYPE_PARAM, TYPE_VALUE)
                 .appendQueryParameter(APP_ID, BuildConfig.GOOGLE_PLACES_API_KEY);
 
@@ -224,7 +248,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             StringBuffer buffer = new StringBuffer();
             if (inputStream == null) {
                 // Nothing to do.
-                Log.v(LOG_TAG, "DSA LOG - doInBackground - no inputStream");
+                Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - no inputStream");
                 return null;
             }
             reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -239,13 +263,13 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
             if (buffer.length() == 0) {
                 // Stream was empty.  No point in parsing.
-                Log.v(LOG_TAG, "DSA LOG - doInBackground - empty stream");
+                Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - empty stream");
                 return null;
             }
             placesJsonStr = buffer.toString();
         } catch (IOException e) {
             mErrorMessage = e.toString();
-            Log.e(LOG_TAG, "DSA LOG - doInBackground - IOException " + e.toString(), e);
+            Log.e(LOG_TAG, "DSA LOG - getGoogleApiResponse - IOException " + e.toString(), e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

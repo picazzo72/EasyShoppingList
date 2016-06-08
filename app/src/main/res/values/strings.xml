@@ -12,7 +12,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_new">New</string>
 
-    <string name="pref_key_reset_product_database">resetDatabase</string>
+    <string name="pref_key_reset_product_database">prefKeyResetDatabase</string>
+    <string name="pref_key_nearby_radius">prefKeySelectNearbyRadius</string>
 
     // Activities
     <string name="title_activity_settings">Settings</string>
