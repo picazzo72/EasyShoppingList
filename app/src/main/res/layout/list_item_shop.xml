@@ -3,7 +3,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_vertical">
+    android:gravity="center_vertical" >
 
     <LinearLayout
         android:orientation="vertical"
@@ -29,6 +29,7 @@
     </LinearLayout>
 
     <ImageView
+        android:id="@+id/list_item_shop_shopping_cart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_shopping_cart_black_24dp"

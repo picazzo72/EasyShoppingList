@@ -6,12 +6,15 @@
     <string name="button_shopping_lists">Shopping Lists</string>
     <string name="button_categories">Categories</string>
     <string name="button_products">Products</string>
-    <string name="button_shop">Supermarkets</string>
+    <string name="button_shop">Stores</string>
 
-    // Settings
+    // Action menus
     <string name="action_settings">Settings</string>
     <string name="action_new">New</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_select_all">Select all</string>
 
+    // Setting keys
     <string name="pref_key_reset_product_database">prefKeyResetDatabase</string>
     <string name="pref_key_nearby_radius">prefKeySelectNearbyRadius</string>
 
@@ -24,6 +27,9 @@
     <string name="dialog_create">Create</string>
     <string name="dialog_cancel">Cancel</string>
     
-    <string name="dialog_import_shops_title">Create supermarket entries</string>
-    <string name="dialog_import_shops_question"><xliff:g id="number_of_shops">%1$s</xliff:g> new supermarkets found. Should these be created?</string>
+    <string name="dialog_import_shops_title">Create store entries</string>
+    <string name="dialog_import_shops_question"><xliff:g id="number_of_shops">%1$s</xliff:g> new stores found. Should these be created?</string>
+
+    <string name="dialog_delete_shops_title">Delete store entries</string>
+    <string name="dialog_delete_shops_question">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store(s)?</string>
 </resources>

@@ -24,7 +24,8 @@ public class MainActivity extends AppCompatActivity
         implements  GoogleApiClient.ConnectionCallbacks,
                     GoogleApiClient.OnConnectionFailedListener,
                     ButtonFragment.Callback,
-                    CategoryFragment.Callback {
+                    CategoryFragment.Callback,
+                    ShopFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
@@ -237,6 +238,37 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Callback from ShopFragment which is called when action mode is started and stopped.
+     * We hide the button fragment in action mode so that the user cannot click the buttons
+     * which messes up the action mode.
+     * @param enabled
+     */
+    @Override
+    public void onShopFragmentActionMode(boolean enabled) {
+        showOrHideButtonFragment(enabled);
+    }
+
+    private void showOrHideButtonFragment(boolean show) {
+        ButtonFragment buttonFragment = (ButtonFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_buttons);
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if (show) {
+            transaction.hide(buttonFragment).commit();
+        }
+        else {
+            transaction.show(buttonFragment).commit();
+        }
+    }
+
+    @Override
+    public void onShopItemSelected(Uri dateUri) {
+
+    }
+
+    /**
+     * onStart method for Activity.
+     * Used to connect to Google API Client
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -244,6 +276,10 @@ public class MainActivity extends AppCompatActivity
         mGoogleApiClient.connect();
     }
 
+    /**
+     * onStop method for Activity.
+     * Used to disconnect from Google API Client
+     */
     @Override
     protected void onStop() {
         // Disconnecting the client invalidates it.
@@ -251,6 +287,10 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
+    /**
+     * Callback from Google API Client when we are connected to Google Services
+     * @param bundle
+     */
     @Override
     public void onConnected(Bundle bundle) {
         Log.v(LOG_TAG, "DSA LOG - Connected to Google Location Api");
