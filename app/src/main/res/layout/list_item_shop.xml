@@ -1,23 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_vertical" >
+    android:gravity="center_vertical">
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:layout_weight="1"
         android:minHeight="?android:attr/listPreferredItemHeightSmall">
 
-        <TextView
-            android:id="@+id/list_item_shop_name"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/abc_text_size_large_material"/>
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/list_item_shop_open_now"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="@dimen/detail_item_horizonal_padding"
+                android:paddingEnd="@dimen/detail_item_horizonal_padding"
+                android:src="@drawable/ic_schedule_no_black_18dp"
+                android:contentDescription="@string/list_item_shop_open_now_icon"
+                android:scaleType="center"
+                android:layout_gravity="center_vertical"/>
+
+            <TextView
+                android:id="@+id/list_item_shop_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/abc_text_size_large_material"
+                tools:ignore="PrivateResource"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/list_item_shop_address"
@@ -25,7 +45,8 @@
             android:layout_height="wrap_content"
             android:paddingTop="4dp"
             android:textStyle="italic"
-            android:textSize="@dimen/abc_text_size_small_material" />
+            android:textSize="@dimen/abc_text_size_small_material"
+            tools:ignore="PrivateResource"/>
     </LinearLayout>
 
     <ImageView
@@ -33,6 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_shopping_cart_black_24dp"
+        android:contentDescription="@string/list_item_shop_shopping_cart_icon"
         android:scaleType="center"
-        android:gravity="right|center_vertical"/>
+        android:gravity="end|center_vertical"/>
 </LinearLayout>

@@ -2,16 +2,23 @@ package com.dandersen.app.easyshoppinglist.data;
 
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 /**
  * Created by Dan on 26-05-2016.
+ * Content provider for accessing the database.
  */
 public class ShoppingProvider extends ContentProvider {
 
@@ -31,6 +38,7 @@ public class ShoppingProvider extends ContentProvider {
     static final int SHOPPING_LIST = 300;           // Shopping lists
     static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
     static final int SHOP = 400;                    // Shop list
+    static final int SHOP_INFO = 401;               // Shop entry info
     static final int SHOPPING_LIST_PRODUCTS = 500;  // Shopping list/products/shop rel table
 
     private static final SQLiteQueryBuilder sProductByCategoryQueryBuilder;
@@ -75,6 +83,7 @@ public class ShoppingProvider extends ContentProvider {
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST + "/*", SHOPPING_LIST_ACTIVE);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_INFO);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCTS, SHOPPING_LIST_PRODUCTS);
 
@@ -87,7 +96,7 @@ public class ShoppingProvider extends ContentProvider {
      */
     @Override
     public boolean onCreate() {
-        mOpenHelper = new ShoppingDbHelper(getContext());
+        mOpenHelper = ShoppingDbHelper.getInstance(getContext());
         return true;
     }
 
@@ -95,14 +104,16 @@ public class ShoppingProvider extends ContentProvider {
         This function returns MIME types! Defines if it is a DIR og ITEM being returned
      */
     @Override
-    public String getType(Uri uri) {
+    public String getType(@NonNull Uri uri) {
         // Use the Uri Matcher to determine what kind of URI this is.
         final int match = sUriMatcher.match(uri);
 
         switch (match) {
-            // This case is the only one returning a single ITEM
+            // These cases return a single ITEM
             case SHOPPING_LIST_ACTIVE:
                 return ShoppingContract.ShoppingListEntry.CONTENT_ITEM_TYPE;
+            case SHOP_INFO:
+                return ShoppingContract.ShopEntry.CONTENT_ITEM_TYPE;
             // The rest are DIR cases
             case CATEGORY:
                 return ShoppingContract.CategoryEntry.CONTENT_TYPE;
@@ -169,6 +180,8 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     private Cursor getProductByCategory(Uri uri, String[] projection, String selection, String sortOrder) {
+        final String COMMA_SEP = ", ";
+
         String category = ShoppingContract.ProductEntry.getCategoryFromUri(uri);
 
         String[] selectionArgs = new String[]{ category };
@@ -181,8 +194,9 @@ public class ShoppingProvider extends ContentProvider {
         selection += sCategorySelection;
 
         StringBuilder selectionArgsBuilder = new StringBuilder();
-        for (int i = 0; i < selectionArgs.length; i++) {
-            selectionArgsBuilder.append(selectionArgs[i] + ", ");
+        for (String selectionArg : selectionArgs) {
+            selectionArgsBuilder.append(selectionArg);
+            selectionArgsBuilder.append(COMMA_SEP);
         }
         Log.v(LOG_TAG, "DSA LOG - Product by category '" + selection + "' binds: " + selectionArgsBuilder.toString());
 
@@ -227,6 +241,32 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getShopEntry(Uri uri, String[] projection) {
+        final String COMMA_SEP = ", ";
+
+        String shopIdFromUri = ShoppingContract.ShopEntry.getShopIdFromUri(uri);
+
+        String selection = ShoppingContract.ShopEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shopIdFromUri };
+
+        StringBuilder selectionArgsBuilder = new StringBuilder();
+        for (String selectionArg : selectionArgs) {
+            selectionArgsBuilder.append(selectionArg);
+            selectionArgsBuilder.append(COMMA_SEP);
+        }
+        Log.v(LOG_TAG, "DSA LOG - Shop by id '" + selection + "' binds: " + selectionArgsBuilder.toString());
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.ShopEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+    }
+
     private Cursor getShoppingListProducts(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.v(LOG_TAG, "DSA LOG - Shopping list products rel");
@@ -243,7 +283,7 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+    public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs,
                         String sortOrder) {
         // Here's the switch statement that, given a URI, will determine what kind of request it is,
         // and query the database accordingly.
@@ -290,6 +330,11 @@ public class ShoppingProvider extends ContentProvider {
                 retCursor = getShopList(projection, selection, selectionArgs, sortOrder);
                 break;
             }
+            case SHOP_INFO:
+            {
+                retCursor = getShopEntry(uri, projection);
+                break;
+            }
             case SHOPPING_LIST_PRODUCTS:
             {
                 retCursor = getShoppingListProducts(projection, selection, selectionArgs, sortOrder);
@@ -298,7 +343,9 @@ public class ShoppingProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+        if (getContext() != null) {
+            retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+        }
         return retCursor;
     }
 
@@ -306,7 +353,7 @@ public class ShoppingProvider extends ContentProvider {
         Handles inserts
      */
     @Override
-    public Uri insert(Uri uri, ContentValues values) {
+    public Uri insert(@NonNull Uri uri, ContentValues values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         Uri returnUri;
@@ -360,19 +407,20 @@ public class ShoppingProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (getContext() != null) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         return returnUri;
     }
 
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Student: Start by getting a writable database
+    public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
+        // Start by getting a writable database
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         int numberOfDeletedRows = 0;
         if (selection == null) selection = "1";
 
-        // Student: Use the uriMatcher to match the WEATHER and LOCATION URI's we are going to
-        // handle.  If it doesn't match these, throw an UnsupportedOperationException.
+        // Use the Uri matcher to match the uri to the right type
         final int match = sUriMatcher.match(uri);
         try {
             switch (match) {
@@ -414,7 +462,9 @@ public class ShoppingProvider extends ContentProvider {
         // is null.
         // Oh, and you should notify the listeners here.
         if (numberOfDeletedRows != 0) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            if (getContext() != null) {
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
         }
 
         // Student: return the actual rows deleted
@@ -422,13 +472,13 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         // Start by getting a writable database
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         int numberOfUpdatedRows = 0;
 
-        // Use the uriMatcher to match the WEATHER and LOCATION URI's we are going to
-        // handle.  If it doesn't match these, throw an UnsupportedOperationException.
+        // Use the uriMatcher to match the URI's we are going to handle.
+        // If it doesn't match these, throw an UnsupportedOperationException.
         final int match = sUriMatcher.match(uri);
         try {
             switch (match) {
@@ -448,6 +498,7 @@ public class ShoppingProvider extends ContentProvider {
                     break;
                 }
                 case SHOP:
+                case SHOP_INFO:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
@@ -467,7 +518,9 @@ public class ShoppingProvider extends ContentProvider {
 
         // Notify the listeners if rows were updated
         if (numberOfUpdatedRows != 0) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            if (getContext() != null) {
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
         }
 
         // Student: return the actual rows deleted
@@ -475,7 +528,7 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     @Override
-    public int bulkInsert(Uri uri, ContentValues[] values) {
+    public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         switch (match) {
@@ -493,7 +546,9 @@ public class ShoppingProvider extends ContentProvider {
                 } finally {
                     db.endTransaction();
                 }
-                getContext().getContentResolver().notifyChange(uri, null);
+                if (getContext() != null) {
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
                 return returnCount;
             default:
                 return super.bulkInsert(uri, values);

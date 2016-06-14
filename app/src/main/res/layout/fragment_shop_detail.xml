@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/colorLightBlue"
+            android:padding="@dimen/activity_horizontal_margin"
+            android:layout_gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/shop_detail_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_store_black_36dp"
+                android:contentDescription="@string/shop_detail_icon"
+                android:scaleType="center" />
+
+            <EditText
+                android:id="@+id/shop_detail_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/shape_edittext"
+                android:textSize="@dimen/abc_text_size_title_material"
+                android:lines="1"
+                android:singleLine="true"
+                android:inputType="textCapSentences"
+                android:fontFamily="sans-serif"
+                android:hint="@string/shop_detail_name_hint"
+                android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                android:layout_marginStart="@dimen/detail_item_horizonal_padding"
+                tools:ignore="PrivateResource"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical"
+            android:paddingTop="@dimen/detail_item_vertical_padding"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+            <ImageView
+                android:id="@+id/shop_detail_address_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:paddingTop="@dimen/detail_item_vertical_padding"
+                android:src="@drawable/ic_place_black_24dp"
+                android:contentDescription="@string/shop_detail_address_icon"
+                android:scaleType="center" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                android:layout_marginStart="@dimen/detail_item_horizonal_padding">
+
+                <EditText
+                    android:id="@+id/shop_detail_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:focusableInTouchMode="false"
+                    android:textSize="@dimen/abc_text_size_body_1_material"
+                    android:lines="1"
+                    android:singleLine="true"
+                    android:inputType="textCapSentences"
+                    android:fontFamily="sans-serif"
+                    android:hint="@string/shop_detail_address_text"
+                    tools:ignore="PrivateResource"/>
+
+                <EditText
+                    android:id="@+id/shop_detail_country"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:focusableInTouchMode="false"
+                    android:textSize="@dimen/abc_text_size_body_1_material"
+                    android:lines="1"
+                    android:singleLine="true"
+                    android:inputType="textCapSentences"
+                    android:fontFamily="sans-serif"
+                    android:hint="@string/shop_detail_country_text"
+                    android:paddingTop="@dimen/detail_item_vertical_padding"
+                    tools:ignore="PrivateResource"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical"
+            android:paddingTop="@dimen/detail_item_vertical_padding"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+            <ImageView
+                android:id="@+id/shop_detail_website_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_public_black_24dp"
+                android:contentDescription="@string/shop_detail_website_icon"
+                android:scaleType="center" />
+
+            <EditText
+                android:id="@+id/shop_detail_website"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:focusableInTouchMode="false"
+                android:textSize="@dimen/abc_text_size_body_1_material"
+                android:lines="1"
+                android:singleLine="true"
+                android:inputType="textUri"
+                android:fontFamily="sans-serif"
+                android:hint="@string/shop_detail_website_hint"
+                android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                android:layout_marginStart="@dimen/detail_item_horizonal_padding"
+                tools:ignore="PrivateResource"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical"
+            android:paddingTop="@dimen/detail_item_vertical_padding"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+            <ImageView
+                android:id="@+id/shop_detail_phone_number_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_local_phone_black_24dp"
+                android:contentDescription="@string/shop_detail_phone_number_icon"
+                android:scaleType="center" />
+
+            <EditText
+                android:id="@+id/shop_detail_phone_number"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:focusableInTouchMode="false"
+                android:textSize="@dimen/abc_text_size_body_1_material"
+                android:lines="1"
+                android:singleLine="true"
+                android:inputType="phone"
+                android:fontFamily="sans-serif"
+                android:hint="@string/shop_detail_phone_number_hint"
+                android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                android:layout_marginStart="@dimen/detail_item_horizonal_padding"
+                tools:ignore="PrivateResource"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical"
+            android:paddingTop="@dimen/detail_item_vertical_padding"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+            <ImageView
+                android:id="@+id/shop_detail_opening_hours_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:paddingTop="@dimen/detail_item_vertical_padding"
+                android:src="@drawable/ic_schedule_black_24dp"
+                android:contentDescription="@string/shop_detail_opening_hours_icon"
+                android:scaleType="center" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/shop_detail_opening_hours_days"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:textSize="@dimen/abc_text_size_body_1_material"
+                    android:textColor="@color/colorBlack"
+                    android:fontFamily="sans-serif"
+                    android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                    android:layout_marginStart="@dimen/detail_item_horizonal_padding"
+                    tools:ignore="PrivateResource"/>
+
+                <TextView
+                    android:id="@+id/shop_detail_opening_hours_hours"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:textSize="@dimen/abc_text_size_body_1_material"
+                    android:textColor="@color/colorBlack"
+                    android:fontFamily="sans-serif"
+                    android:paddingLeft="@dimen/detail_item_horizonal_padding"
+                    android:paddingRight="@dimen/detail_item_horizonal_padding"
+                    tools:ignore="PrivateResource"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+
+</ScrollView>

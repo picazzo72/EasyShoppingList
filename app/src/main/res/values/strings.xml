@@ -13,6 +13,8 @@
     <string name="action_new">New</string>
     <string name="action_delete">Delete</string>
     <string name="action_select_all">Select all</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_refresh">Refresh</string>
 
     // Setting keys
     <string name="pref_key_reset_product_database">prefKeyResetDatabase</string>
@@ -20,7 +22,20 @@
 
     // Activities
     <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_shop_details">Store details</string>
     <string name="title_activity_new_product">Add new product</string>
+    <string name="list_item_shop_open_now_icon">Open now</string>
+    <string name="list_item_shop_shopping_cart_icon">Add to shopping list</string>
+    <string name="shop_detail_icon">Store details</string>
+    <string name="shop_detail_name_hint">Store name</string>
+    <string name="shop_detail_address_icon">Address</string>
+    <string name="shop_detail_address_text">Address</string>
+    <string name="shop_detail_country_text">Country</string>
+    <string name="shop_detail_website_icon">Website</string>
+    <string name="shop_detail_website_hint">Website</string>
+    <string name="shop_detail_phone_number_icon">Phone number</string>
+    <string name="shop_detail_phone_number_hint">Phone number</string>
+    <string name="shop_detail_opening_hours_icon">Opening hours</string>
 
     // Dialogs
     <string name="dialog_new_product">Enter new product name</string>
@@ -32,4 +47,13 @@
 
     <string name="dialog_delete_shops_title">Delete store entries</string>
     <string name="dialog_delete_shops_question">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store(s)?</string>
+
+    // Implicit intent error message
+    <string name="error_msg_no_map">There is no map service available</string>
+    <string name="error_msg_no_browser">There is no browser service available</string>
+    <string name="error_msg_no_phone">There is no phone service available</string>
+
+    // Opening hours
+    <string name="opening_hours_open_until">open until</string>
+
 </resources>

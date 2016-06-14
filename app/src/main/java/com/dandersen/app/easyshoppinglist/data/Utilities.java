@@ -11,6 +11,7 @@ import java.util.Map;
 
 /**
  * Created by dandersen on 29-05-2016.
+ * Database utilities
  */
 public class Utilities {
 
@@ -118,9 +119,9 @@ public class Utilities {
 
                         // Insert products
                         String[] products = (String[]) pair.getValue();
-                        for (int i=0, count = products.length; i < count; ++i) {
+                        for (String product : products) {
                             ContentValues productValues = new ContentValues();
-                            productValues.put(ShoppingContract.ProductEntry.COLUMN_NAME, products[i]);
+                            productValues.put(ShoppingContract.ProductEntry.COLUMN_NAME, product);
                             productValues.put(ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID, categoryId);
                             long productId = db.insert(ShoppingContract.ProductEntry.TABLE_NAME, null, productValues);
                             if (productId != -1) ++insertProductsCount;
@@ -143,29 +144,9 @@ public class Utilities {
         deleteAllRecordsFromDatabase(context);
 
         // Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(context).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(context).getWritableDatabase();
         if (!db.isOpen()) throw new AssertionError("Database is not open");
 
         populateDatabase(db);
-    }
-
-    public static String buildShopAddress(String street,
-                                          String streetNumber,
-                                          String city,
-                                          String formattedAddress) {
-        String res = "";
-        if (street == null || city == null) {
-            res = formattedAddress;
-        }
-        else {
-            res = street;
-            if (streetNumber != null) {
-                res += " " + streetNumber;
-            }
-            if (city != null) {
-                res += ", " + city;
-            }
-        }
-        return res;
     }
 }

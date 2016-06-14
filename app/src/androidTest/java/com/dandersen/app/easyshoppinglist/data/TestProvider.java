@@ -13,6 +13,7 @@ import android.util.Log;
 
 /**
  * Created by Dan on 26-05-2016.
+ * Tests for the provider
  */
 /*
     Note: This is not a complete set of tests of the ContentProvider, but it does test
@@ -185,7 +186,7 @@ public class TestProvider extends AndroidTestCase {
      */
     public void testBasicProductQuery() {
         // insert our test records into the database
-        ShoppingDbHelper dbHelper = new ShoppingDbHelper(mContext);
+        ShoppingDbHelper dbHelper = ShoppingDbHelper.getInstance(mContext);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         long categoryRowId = TestUtilities.insertDairyCategoryValues(mContext);

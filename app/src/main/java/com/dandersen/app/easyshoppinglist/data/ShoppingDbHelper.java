@@ -7,17 +7,31 @@ import android.util.Log;
 
 /**
  * Created by Dan on 23-05-2016.
+ * Maintains the connection to the SQLite database.
  */
 public class ShoppingDbHelper extends SQLiteOpenHelper {
+
+    private static ShoppingDbHelper mInstance = null;
 
     private static final String LOG_TAG = ShoppingDbHelper.class.getSimpleName();
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 10;
 
     static final String DATABASE_NAME = "shopping.db";
 
-    public ShoppingDbHelper(Context context) {
+    public static ShoppingDbHelper getInstance(Context context) {
+        // Use the application context, which will ensure that you
+        // don't accidentally leak an Activity's context.
+        // See this article for more information: http://bit.ly/6LRzfx
+        // http://stackoverflow.com/questions/18147354/sqlite-connection-leaked-although-everything-closed/18148718#18148718
+        if (mInstance == null) {
+            mInstance = new ShoppingDbHelper(context.getApplicationContext());
+        }
+        return mInstance;
+    }
+
+    private ShoppingDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -93,7 +107,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 ShoppingContract.ShopEntry._ID + " INTEGER PRIMARY KEY," +
 
                 // Place Id
-                ShoppingContract.ShopEntry.COLUMN_PLACE_ID + " TEXT NOT NULL, " +
+                ShoppingContract.ShopEntry.COLUMN_PLACE_ID + " TEXT DEFAULT NULL, " +
 
                 // Location
                 ShoppingContract.ShopEntry.COLUMN_LOCATION + " TEXT DEFAULT NULL, " +
@@ -127,6 +141,12 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
 
                 // Website
                 ShoppingContract.ShopEntry.COLUMN_WEBSITE + " TEXT DEFAULT NULL, " +
+
+                // Open now
+                ShoppingContract.ShopEntry.COLUMN_OPEN_NOW + " INTEGER DEFAULT NULL, " +
+
+                // Opening hours
+                ShoppingContract.ShopEntry.COLUMN_OPENING_HOURS + " TEXT DEFAULT NULL, " +
 
                 // Date created, stored as long in milliseconds since the epoch
                 ShoppingContract.ShopEntry.COLUMN_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
@@ -170,6 +190,11 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(SQL_CREATE_PRODUCT_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_SHOP_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_SHOPPING_LIST_PRODUCTS_TABLE);
+
+        // Create index on place_id in shop table
+        sqLiteDatabase.execSQL("CREATE INDEX " + ShoppingContract.ShopEntry.COLUMN_PLACE_ID +
+                "_idx on " + ShoppingContract.ShopEntry.TABLE_NAME + " (" +
+                ShoppingContract.ShopEntry.COLUMN_PLACE_ID + ")");
 
         Log.v(LOG_TAG, "DSA LOG - Databases have been created");
     }

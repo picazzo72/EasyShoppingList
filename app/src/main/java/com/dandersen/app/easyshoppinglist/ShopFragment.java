@@ -3,6 +3,7 @@ package com.dandersen.app.easyshoppinglist;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -21,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 
 /**
  * Created by Dan on 28-05-2016.
+ * Shop fragment
  */
 public class ShopFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -75,16 +78,16 @@ public class ShopFragment extends Fragment
             ShoppingContract.ShopEntry.COLUMN_STREET,
             ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER,
             ShoppingContract.ShopEntry.COLUMN_CITY,
-            ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS
+            ShoppingContract.ShopEntry.COLUMN_OPEN_NOW
     };
 
     // These indices are tied to SHOP_COLUMNS. If this changes, these indices must change.
-    static final int COL_SHOP_ID = 0;
-    static final int COL_SHOP_NAME = 1;
-    static final int COL_SHOP_STREET = 2;
-    static final int COL_SHOP_STREET_NUMBER = 3;
-    static final int COL_SHOP_CITY = 4;
-    static final int COL_FORMATTED_ADDRESS = 5;
+    static final int COL_SHOP_ID                    = 0;
+    static final int COL_SHOP_NAME                  = 1;
+    static final int COL_SHOP_STREET                = 2;
+    static final int COL_SHOP_STREET_NUMBER         = 3;
+    static final int COL_SHOP_CITY                  = 4;
+    static final int COL_OPEN_NOW                   = 5;
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -95,8 +98,9 @@ public class ShopFragment extends Fragment
         /**
          * ShopFragmentCallback for when an item has been selected.
          */
-        public void onShopItemSelected(Uri dateUri);
-        public void onShopFragmentActionMode(boolean enabled);
+        void onShopItemSelected(Uri dateUri);
+        void onShopFragmentActionMode(boolean enabled);
+        void onShopListUpdate();
     }
 
 
@@ -141,14 +145,13 @@ public class ShopFragment extends Fragment
 
                 // CursorAdapter returns a cursor at the correct position for getItem(), or null
                 // if it cannot seek to that position.
-//                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
-//                if (c != null) {
-//                    String locationSetting = Utility.getPreferredLocation(getActivity());
-//                    Callback cb = (Callback) getActivity();
-//                    cb.onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-//                            locationSetting, c.getLong(COL_WEATHER_DATE)
-//                    ));
-//                }
+                Cursor c = (Cursor) adapterView.getItemAtPosition(position);
+                if (c != null) {
+                    Callback cb = (Callback) getActivity();
+                    cb.onShopItemSelected(ShoppingContract.ShopEntry.buildShopUri(
+                            c.getLong(COL_SHOP_ID)
+                    ));
+                }
                 mPosition = position;
             }
         });
@@ -219,7 +222,7 @@ public class ShopFragment extends Fragment
                 if (item.getItemId() == R.id.action_delete){
                     SparseBooleanArray selected = mShopAdapter.getSelectedIds();
                     short size = (short)selected.size();
-                    ArrayList<Integer> itemsToDelete = new ArrayList();
+                    ArrayList<Integer> itemsToDelete = new ArrayList<>();
                     for (byte I = 0; I<size; I++){
                         if (selected.valueAt(I)) {
                             int curItemNumber = selected.keyAt(I);
@@ -251,7 +254,9 @@ public class ShopFragment extends Fragment
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 // Hide action bar
-                ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
+                if (getActivity() != null && ((AppCompatActivity)getActivity()).getSupportActionBar() != null) {
+                    ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
+                }
 
                 // Show contextual action menu
                 mode.getMenuInflater().inflate(R.menu.menu_list_context, menu);
@@ -271,13 +276,17 @@ public class ShopFragment extends Fragment
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 // Show action bar
-                ((AppCompatActivity)getActivity()).getSupportActionBar().show();
+                if (getActivity() != null && ((AppCompatActivity)getActivity()).getSupportActionBar() != null) {
+                    ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+                }
 
                 // Notify activity that action mode is done
                 ((ShopFragment.Callback)getActivity()).onShopFragmentActionMode(false);
 
                 // Notify adapter that action mode is done
                 mShopAdapter.setActionMode(false);
+
+
             }
 
             /**
@@ -294,6 +303,8 @@ public class ShopFragment extends Fragment
     }
 
     private void getUserConfirmationAndDelete(final ArrayList<Integer> itemsToDelete) {
+        final ShopFragment fShopFragment = this;
+
         new AlertDialog.Builder(getActivity())
                 .setCancelable(true)
                 .setTitle(R.string.dialog_delete_shops_title)
@@ -301,6 +312,9 @@ public class ShopFragment extends Fragment
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         mShopAdapter.remove(itemsToDelete);
+
+                        // Re-initalize loader after data was removed
+                        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, fShopFragment).forceLoad();
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -323,6 +337,8 @@ public class ShopFragment extends Fragment
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
+
+        mListView.invalidateViews();
 
         // Select first item, last selected or new product if one of these are available
         if (mPosition != ListView.INVALID_POSITION || mShopId > 0) {
@@ -374,6 +390,7 @@ public class ShopFragment extends Fragment
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_new, menu);
+        inflater.inflate(R.menu.menu_refresh, menu);
     }
 
     @Override
@@ -385,6 +402,10 @@ public class ShopFragment extends Fragment
 
         if (id == R.id.action_new) {
             createNewShop();
+            return true;
+        }
+        else if (id == R.id.action_refresh) {
+            ((ShopFragment.Callback)getActivity()).onShopListUpdate();
             return true;
         }
 

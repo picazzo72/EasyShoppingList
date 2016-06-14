@@ -10,8 +10,9 @@ import android.widget.NumberPicker;
 
 /**
  * Created by dandersen on 07-06-2016.
+ * General class for creating a number picker from a list of values.
  */
-public class NumberPickerDisplayedValuesPreference extends DialogPreference {
+public abstract class NumberPickerDisplayedValuesPreference extends DialogPreference {
 
     protected NumberPicker mNumberPicker;
     protected String[] mDisplayedValues = null;
@@ -46,4 +47,16 @@ public class NumberPickerDisplayedValuesPreference extends DialogPreference {
         return a.getInt(index, 1);
     }
 
+    @Override
+    protected void onDialogClosed(boolean positiveResult) {
+        super.onDialogClosed(positiveResult);
+        if (positiveResult) {
+            int port = mNumberPicker.getValue();
+            if (port < mDisplayedValues.length) {
+                onSetPreferencesValue(mDisplayedValues[port]);
+            }
+        }
+    }
+
+    abstract void onSetPreferencesValue(String val);
 }

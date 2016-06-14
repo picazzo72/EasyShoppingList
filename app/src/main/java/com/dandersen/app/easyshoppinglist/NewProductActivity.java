@@ -41,18 +41,24 @@ public class NewProductActivity extends AppCompatActivity {
 
         // Set action for Floating Action button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createProduct(view);
-            }
-        });
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (fab != null) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    createProduct(view);
+                }
+            });
+        }
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
     }
 
     void createProduct(View view) {
         // Get product name
         TextView textView = (TextView) findViewById(R.id.new_product_name);
+        if (textView == null) throw new AssertionError("TextView for product name is null");
         String productName = textView.getText().toString();
         if (productName.isEmpty()) {
             Snackbar.make(view, "You have to specify a product name", Snackbar.LENGTH_LONG)
@@ -62,6 +68,7 @@ public class NewProductActivity extends AppCompatActivity {
 
         // Get category id
         Spinner spinner = (Spinner) findViewById(R.id.new_product_category);
+        if (spinner == null) throw new AssertionError("Spinner for category is null");
         long categoryId = spinner.getSelectedItemId();
         if (categoryId <= 0) {
             Snackbar.make(view, "You have to select a category", Snackbar.LENGTH_LONG)
@@ -73,20 +80,26 @@ public class NewProductActivity extends AppCompatActivity {
         // Check that product name does not already exist in this category
         String[] columns = new String[] { ShoppingContract.ProductEntry._ID };
         String where = ShoppingContract.ProductEntry.COLUMN_NAME + "= ? AND " +
-                       ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID + "= ?";
+                ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID + "= ?";
         String[] binds = new String[] { productName , Long.toString(categoryId) };
-        Cursor c = getContentResolver().query(
-                ShoppingContract.ProductEntry.CONTENT_URI,
-                columns,
-                where,
-                binds,
-                null  // sort order
-        );
-        if (c.moveToFirst()) {
-            Snackbar.make(view, "The product '" + productName + "' already exists in category '" +
-                    categoryName + "'", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
-            return;
+        Cursor c = null;
+        try {
+            c = getContentResolver().query(
+                    ShoppingContract.ProductEntry.CONTENT_URI,
+                    columns,
+                    where,
+                    binds,
+                    null  // sort order
+            );
+            if (c!= null && c.moveToFirst()) {
+                Snackbar.make(view, "The product '" + productName + "' already exists in category '" +
+                        categoryName + "'", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return;
+            }
+        }
+        finally {
+            if (c != null) c.close();
         }
         ContentValues contentValues = new ContentValues();
         contentValues.put(ShoppingContract.ProductEntry.COLUMN_NAME, productName);

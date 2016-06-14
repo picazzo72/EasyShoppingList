@@ -26,6 +26,7 @@ public class NearbySearchRadiusNumberPickerPreference extends NumberPickerDispla
         int resId = attributes.getResourceId(R.styleable.NearbySearchRadiusNumberPickerAttrs_picker_values, 0);
         if (resId == 0) throw new AssertionError("Resource ID in NearbySearchRadiusNumberPickerPreference cannot be 0");
         mDisplayedValues = context.getResources().getStringArray(resId);
+        attributes.recycle();
 
         // Since the displayed values were not loaded onSetInitialValue we initialize the selected value here
         if (mInitialValue == null) {
@@ -48,13 +49,8 @@ public class NearbySearchRadiusNumberPickerPreference extends NumberPickerDispla
     }
 
     @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        super.onDialogClosed(positiveResult);
-        if (positiveResult) {
-            int port = mNumberPicker.getValue();
-            if (port < mDisplayedValues.length) {
-                Settings.getInstance().setNearbySearchRadius(Integer.valueOf(mDisplayedValues[port]));
-            }
-        }
+    public void onSetPreferencesValue(String val) {
+        Settings.getInstance().setNearbySearchRadius(Integer.valueOf(val));
     }
+
 }

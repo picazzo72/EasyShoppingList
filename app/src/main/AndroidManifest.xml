@@ -14,7 +14,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
 
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,27 +26,34 @@
         <activity
             android:name=".prefs.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
-
-        <provider
-            android:name=".data.ShoppingProvider"
-            android:authorities="com.dandersen.app.easyshoppinglist"
-            android:enabled="true"
-            android:exported="true"></provider>
-
-        <activity
-            android:name=".NewProductActivity"
-            android:label="@string/title_activity_new_product"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:parentActivityName="com.dandersen.app.easyshoppinglist.MainActivity">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.dandersen.app.easyshoppinglist.MainActivity" />
         </activity>
+
+        <activity
+            android:name=".DetailShopActivity"
+            android:label="@string/title_activity_shop_details"
+            android:parentActivityName="com.dandersen.app.easyshoppinglist.MainActivity">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dandersen.app.easyshoppinglist.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".NewProductActivity"
+            android:label="@string/title_activity_new_product"
+            android:parentActivityName="com.dandersen.app.easyshoppinglist.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.dandersen.app.easyshoppinglist.MainActivity" />
+        </activity>
+
     </application>
 
 </manifest>

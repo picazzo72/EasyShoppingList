@@ -17,6 +17,7 @@ import java.util.Set;
 
 /**
  * Created by Dan on 23-05-2016.
+ * Test utilities
  */
 public class TestUtilities extends AndroidTestCase {
     static final String TEST_CATEGORY = "Dairy products";
@@ -61,7 +62,7 @@ public class TestUtilities extends AndroidTestCase {
 
     static long insertDairyCategoryValues(Context context) {
         // insert our test records into the database
-        ShoppingDbHelper dbHelper = new ShoppingDbHelper(context);
+        ShoppingDbHelper dbHelper = ShoppingDbHelper.getInstance(context);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues testValues = TestUtilities.createDairyCategoryValues();
 

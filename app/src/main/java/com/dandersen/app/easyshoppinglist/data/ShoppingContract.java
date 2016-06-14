@@ -9,6 +9,7 @@ import android.text.format.Time;
 
 /**
  * Created by Dan on 23-05-2016.
+ * Contract for the database defining the tables.
  */
 public class ShoppingContract {
     // The "Content authority" is a name for the entire content provider, similar to the
@@ -193,11 +194,21 @@ public class ShoppingContract {
         // Website
         public static final String COLUMN_WEBSITE = "website";
 
+        // Open now
+        public static final String COLUMN_OPEN_NOW = "open_now";
+
+        // Open hours
+        public static final String COLUMN_OPENING_HOURS = "opening_hours";
+
         // Date, stored as long in milliseconds since the epoch
         public static final String COLUMN_CREATED = "created";
 
         public static Uri buildShopUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static String getShopIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
         }
     }
 

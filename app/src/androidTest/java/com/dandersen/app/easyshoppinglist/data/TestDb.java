@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 /**
  * Created by Dan on 23-05-2016.
+ * Testing the database.
  */
 public class TestDb extends AndroidTestCase {
 
@@ -40,7 +41,7 @@ public class TestDb extends AndroidTestCase {
         // build a HashSet of all of the table names we wish to look for
         // Note that there will be another table in the DB that stores the
         // Android metadata (db version information)
-        final HashSet<String> tableNameHashSet = new HashSet<String>();
+        final HashSet<String> tableNameHashSet = new HashSet<>();
         tableNameHashSet.add(ShoppingContract.ShoppingListEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.CategoryEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ProductEntry.TABLE_NAME);
@@ -48,25 +49,34 @@ public class TestDb extends AndroidTestCase {
         tableNameHashSet.add(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME);
 
         mContext.deleteDatabase(ShoppingDbHelper.DATABASE_NAME);
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // have we created the tables we want?
-        Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+        Cursor c = null;
+        try {
+            c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
 
-        assertTrue("Error: This means that the database has not been created correctly",
-                c.moveToFirst());
+            assertTrue("Error: This means that the database has not been created correctly",
+                    c.moveToFirst());
 
-        // verify that the tables have been created
-        do {
-            tableNameHashSet.remove(c.getString(0));
-        } while( c.moveToNext() );
+            // verify that the tables have been created
+            do {
+                tableNameHashSet.remove(c.getString(0));
+            } while( c.moveToNext() );
 
-        // check that all tables are created
-        assertTrue("Error: Your database was created without one or more of the required tables",
-                tableNameHashSet.isEmpty());
+            // check that all tables are created
+            assertTrue("Error: Your database was created without one or more of the required tables",
+                    tableNameHashSet.isEmpty());
+        }
+        finally {
+            if (c != null) {
+                c.close();
+                c = null;
+            }
+        }
 
-        {
+        try {
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ShoppingListEntry.TABLE_NAME + ")",
                     null);
 
@@ -74,7 +84,7 @@ public class TestDb extends AndroidTestCase {
                     c.moveToFirst());
 
             // Build a HashSet of all of the column names we want to look for
-            final HashSet<String> columnHashSet = new HashSet<String>();
+            final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.ShoppingListEntry._ID);
             columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_DATE);
             columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_AMOUNT);
@@ -92,8 +102,14 @@ public class TestDb extends AndroidTestCase {
             assertTrue("Error: The database doesn't contain all of the required shopping list entry columns",
                     columnHashSet.isEmpty());
         }
+        finally {
+            if (c != null) {
+                c.close();
+                c = null;
+            }
+        }
 
-        {
+        try {
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.CategoryEntry.TABLE_NAME + ")",
                     null);
 
@@ -101,7 +117,7 @@ public class TestDb extends AndroidTestCase {
                     c.moveToFirst());
 
             // Build a HashSet of all of the column names we want to look for
-            final HashSet<String> columnHashSet = new HashSet<String>();
+            final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.CategoryEntry._ID);
             columnHashSet.add(ShoppingContract.CategoryEntry.COLUMN_NAME);
             columnHashSet.add(ShoppingContract.CategoryEntry.COLUMN_DESCRIPTION);
@@ -118,8 +134,14 @@ public class TestDb extends AndroidTestCase {
             assertTrue("Error: The database doesn't contain all of the required category entry columns",
                     columnHashSet.isEmpty());
         }
+        finally {
+            if (c != null) {
+                c.close();
+                c = null;
+            }
+        }
 
-        {
+        try {
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ProductEntry.TABLE_NAME + ")",
                     null);
 
@@ -127,7 +149,7 @@ public class TestDb extends AndroidTestCase {
                     c.moveToFirst());
 
             // Build a HashSet of all of the column names we want to look for
-            final HashSet<String> columnHashSet = new HashSet<String>();
+            final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.ProductEntry._ID);
             columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_NAME);
             columnHashSet.add(ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID);
@@ -148,8 +170,14 @@ public class TestDb extends AndroidTestCase {
             assertTrue("Error: The database doesn't contain all of the required product entry columns",
                     columnHashSet.isEmpty());
         }
+        finally {
+            if (c != null) {
+                c.close();
+                c = null;
+            }
+        }
 
-        {
+        try {
             // now, do our tables contain the correct columns?
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ShopEntry.TABLE_NAME + ")",
                     null);
@@ -158,7 +186,7 @@ public class TestDb extends AndroidTestCase {
                     c.moveToFirst());
 
             // Build a HashSet of all of the column names we want to look for
-            final HashSet<String> columnHashSet = new HashSet<String>();
+            final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.ShopEntry._ID);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_NAME);
             columnHashSet.add(ShoppingContract.ShopEntry.COLUMN_STREET);
@@ -178,8 +206,14 @@ public class TestDb extends AndroidTestCase {
             assertTrue("Error: The database doesn't contain all of the required shop entry columns",
                     columnHashSet.isEmpty());
         }
+        finally {
+            if (c != null) {
+                c.close();
+                c = null;
+            }
+        }
 
-        {
+        try {
             c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ShoppingListProductsEntry.TABLE_NAME + ")",
                     null);
 
@@ -187,7 +221,7 @@ public class TestDb extends AndroidTestCase {
                     c.moveToFirst());
 
             // Build a HashSet of all of the column names we want to look for
-            final HashSet<String> columnHashSet = new HashSet<String>();
+            final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry._ID);
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_PRODUCT_ID);
             columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOPPING_LIST_ID);
@@ -205,6 +239,11 @@ public class TestDb extends AndroidTestCase {
             // entry columns
             assertTrue("Error: The database doesn't contain all of the required shopping list products entry columns",
                     columnHashSet.isEmpty());
+        }
+        finally {
+            if (c != null) {
+                c.close();
+            }
         }
 
         db.close();
@@ -243,7 +282,7 @@ public class TestDb extends AndroidTestCase {
     */
     public void testShoppingListTable() {
         // First step: Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // Insert ContentValues into database and get a row ID back
@@ -286,7 +325,7 @@ public class TestDb extends AndroidTestCase {
     */
     public void testCategoryTable() {
         // First step: Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // Insert ContentValues into database and get a row ID back
@@ -332,7 +371,7 @@ public class TestDb extends AndroidTestCase {
     */
     public void testProductTable() {
         // First step: Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // Insert ContentValues into database and get a row ID back
@@ -375,7 +414,7 @@ public class TestDb extends AndroidTestCase {
     */
     public void testShopTable() {
         // First step: Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // Insert ContentValues into database and get a row ID back
@@ -390,7 +429,7 @@ public class TestDb extends AndroidTestCase {
      */
     public void testShoppingListProductsTable() {
         // First step: Get reference to writable database
-        SQLiteDatabase db = new ShoppingDbHelper(mContext).getWritableDatabase();
+        SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
         assertEquals(true, db.isOpen());
 
         // Insert shopping into database and get a row ID back

@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.prefs.Settings;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.utils.StringUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,7 +25,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -32,6 +36,7 @@ import javax.net.ssl.X509TrustManager;
 
 /**
  * Created by dandersen on 05-06-2016.
+ * AsyncTask for fetching nearby grocery stores from Google Places API.
  */
 public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
@@ -42,6 +47,8 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     // Error message to display to the user when control is transferred to ui thread.
     private String mErrorMessage = null;
+
+    public boolean mTaskFinished = false;
 
     // Create a trust manager that does not validate certificate chains like the
     private static TrustManager[] sTrustManager = new TrustManager[] {
@@ -102,7 +109,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
         // Find nearby place ids
         String nextPageToken = null;
-        ArrayList nearbyPlaces = new ArrayList();
+        HashMap<String, Boolean> nearbyPlaces = new HashMap<>();
 
         do {
             // Request nearby places from Google API
@@ -112,29 +119,56 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             nextPageToken = parseGoogleNearbyPlacesResult(placesJsonStr, nearbyPlaces);
         } while (nextPageToken != null);
 
-        if (nearbyPlaces.isEmpty()) return null;
+        if (nearbyPlaces.isEmpty()) {
+            mTaskFinished = true;
+            return null;
+        }
 
         // Fetch place ids from database
         HashSet<String> placeIdsInDb = new HashSet<>();
-        Cursor c = mContentResolver.query(
-                ShoppingContract.ShopEntry.CONTENT_URI,
-                new String[] { ShoppingContract.ShopEntry.COLUMN_PLACE_ID },
-                null, // cols for "where" clause
-                null, // values for "where" clause
-                null  // sort order
-        );
-        if (c.moveToFirst()) {
-            do {
-                String placeId = c.getString(0);
-                if (placeId.isEmpty()) throw new AssertionError("Place id cannot be empty");
-                placeIdsInDb.add(placeId);
-            } while (c.moveToNext());
+        Cursor c = null;
+        try {
+            c = mContentResolver.query(
+                    ShoppingContract.ShopEntry.CONTENT_URI,
+                    new String[]{ShoppingContract.ShopEntry.COLUMN_PLACE_ID},
+                    null, // cols for "where" clause
+                    null, // values for "where" clause
+                    null  // sort order
+            );
+            if (c != null && c.moveToFirst()) {
+                do {
+                    String placeId = c.getString(0);
+                    if (placeId.isEmpty()) throw new AssertionError("Place id cannot be empty");
+                    placeIdsInDb.add(placeId);
+                } while (c.moveToNext());
+            }
+        }
+        finally {
+            if (c != null) c.close();
         }
 
+        // ArrayList for updates
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+        // ArrayList for new inserts
         ArrayList<ContentValues> contentValuesArray = new ArrayList<>();
-        for (int i = 0, end = nearbyPlaces.size(); i < end; ++i) {
-            String placeId = (String)nearbyPlaces.get(i);
-            if (!placeIdsInDb.contains(placeId)) {
+
+        // Loop over stores
+        Iterator<String> nearbyPlacesIterator = nearbyPlaces.keySet().iterator();
+        while (nearbyPlacesIterator.hasNext()) {
+            String placeId = nearbyPlacesIterator.next();
+            Boolean openNow = nearbyPlaces.get(placeId);
+            if (placeIdsInDb.contains(placeId)) {
+                if (openNow != null) {
+                    // This store is already in the db - update opening hours
+                    ops.add(ContentProviderOperation.newUpdate(ShoppingContract.ShopEntry.CONTENT_URI)
+                            .withSelection(ShoppingContract.ShopEntry.COLUMN_PLACE_ID + " = ?",
+                                    new String[]{ placeId })
+                            .withValue(ShoppingContract.ShopEntry.COLUMN_OPEN_NOW, openNow ? 1 : 0)
+                            .build());
+                }
+            }
+            else {
                 // Request place details from Google API
                 String placeDetailsJsonStr = getGoogleApiResponse(buildPlaceDetailsUri(placeId));
 
@@ -146,6 +180,18 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             }
         }
 
+        // Update open now
+        if (!ops.isEmpty()) {
+            try {
+                mContentResolver.applyBatch(ShoppingContract.CONTENT_AUTHORITY, ops);
+            }
+            catch (Exception e){
+                mErrorMessage = e.toString();
+                Log.e(LOG_TAG, "DSA LOG - applyBatch - Exception " + e.toString(), e);
+                e.printStackTrace();
+            }
+        }
+
         if (!contentValuesArray.isEmpty()) {
             ContentValues[] contentValuesList = new ContentValues[contentValuesArray.size()];
             for (int i = 0, end = contentValuesArray.size(); i < end; ++i) {
@@ -154,39 +200,48 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             return contentValuesList;
         }
 
+        mTaskFinished = true;
         return null;
     }
 
     @Override
     protected void onPostExecute(ContentValues[] contentValuesList) {
-        if (mActivity == null) return;
+        try {
+            if (mActivity == null) return;
 
-        if (contentValuesList == null) {
-            if (mErrorMessage != null) {
-                Toast.makeText(mActivity, mErrorMessage, Toast.LENGTH_LONG).show();
+            if (contentValuesList == null) {
+                if (mErrorMessage != null) {
+                    Toast.makeText(mActivity, mErrorMessage, Toast.LENGTH_LONG).show();
+                }
+                return;
             }
-            return;
+
+            final ContentValues[] fContentValuesList = contentValuesList;
+
+            new AlertDialog.Builder(mActivity)
+                    .setCancelable(true)
+                    .setTitle(R.string.dialog_import_shops_title)
+                    .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            mTaskFinished = true;
+                            int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
+                            Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop entries added to database");
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            mTaskFinished = true;
+                            dialog.cancel();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
         }
-
-        final ContentValues[] fContentValuesList = contentValuesList;
-
-        new AlertDialog.Builder(mActivity)
-                .setCancelable(true)
-                .setTitle(R.string.dialog_import_shops_title)
-                .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
-                        Log.i(LOG_TAG, insertCount + " shop entries added to database");
-                    }
-                })
-                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+        finally {
+            mContentResolver = null;
+            mActivity = null;
+        }
     }
 
     private Uri buildNearbySearchUri(String location, @Nullable String nextPageToken) {
@@ -225,6 +280,8 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
     }
 
     private String getGoogleApiResponse(Uri builtUri) {
+        final String NEWLINE = "\n";
+
         // These need to be declared outside the try/catch so they can be closed in the finally block.
         HttpsURLConnection urlConnection = null;
         BufferedReader reader = null;
@@ -236,7 +293,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             URL url = new URL(builtUri.toString());
 
             // Log URL
-            Log.v(LOG_TAG, "DSA LOG - Built URL for Google Places API " + url);
+            Log.i(LOG_TAG, "DSA LOG - Built URL for Google Places API " + url);
 
             // Create the request to Google Places, and open the connection
             urlConnection = (HttpsURLConnection) url.openConnection();
@@ -245,7 +302,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
             // Read the input stream into a String
             InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder stringBuilder = new StringBuilder();
             if (inputStream == null) {
                 // Nothing to do.
                 Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - no inputStream");
@@ -258,15 +315,16 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
                 // But it does make debugging a *lot* easier if you print out the completed
                 // buffer for debugging.
-                buffer.append(line + "\n");
+                stringBuilder.append(line);
+                stringBuilder.append(NEWLINE);
             }
 
-            if (buffer.length() == 0) {
+            if (stringBuilder.length() == 0) {
                 // Stream was empty.  No point in parsing.
                 Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - empty stream");
                 return null;
             }
-            placesJsonStr = buffer.toString();
+            placesJsonStr = stringBuilder.toString();
         } catch (IOException e) {
             mErrorMessage = e.toString();
             Log.e(LOG_TAG, "DSA LOG - getGoogleApiResponse - IOException " + e.toString(), e);
@@ -285,10 +343,13 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         return placesJsonStr;
     }
 
-    private String parseGoogleNearbyPlacesResult(final String response, ArrayList nearbyPlaces) {
+    private String parseGoogleNearbyPlacesResult(final String response,
+                                                 HashMap<String, Boolean> nearbyPlaces) {
         final String RESULTS            = "results";
         final String PLACE_ID           = "place_id";
         final String NEXT_PAGE_TOKEN    = "next_page_token";
+        final String OPENING_HOURS      = "opening_hours";
+        final String OPEN_NOW           = "open_now";
 
         String nextPageToken = null;
         try {
@@ -306,11 +367,20 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 JSONArray jsonArray = jsonObject.getJSONArray(RESULTS);
 
                 for (int i = 0, end = jsonArray.length(); i < end; ++i) {
+                    String placeId = null;
+                    Boolean openNow = null;
                     if (jsonArray.getJSONObject(i).has(PLACE_ID)) {
-                        String placeId = jsonArray.getJSONObject(i).optString(PLACE_ID);
-                        if (!placeId.isEmpty()) {
-                            nearbyPlaces.add(placeId);
+                        placeId = jsonArray.getJSONObject(i).optString(PLACE_ID);
+                        if (placeId.isEmpty()) placeId = null;
+                    }
+                    if (jsonArray.getJSONObject(i).has(OPENING_HOURS)) {
+                        JSONObject openingHoursObject = jsonArray.getJSONObject(i).getJSONObject(OPENING_HOURS);
+                        if (openingHoursObject.has(OPEN_NOW)) {
+                            openNow = openingHoursObject.optBoolean(OPEN_NOW);
                         }
+                    }
+                    if (placeId != null) {
+                        nearbyPlaces.put(placeId, openNow);
                     }
                 }
             }
@@ -323,6 +393,12 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         return nextPageToken;
     }
 
+    /**
+     * Parses the Google API Place details result.
+     * https://developers.google.com/places/web-service/details#PlaceDetailsResults
+     * @param response The JSON text from the API
+     * @return ContentValues to insert an entry into the shop table
+     */
     ContentValues parseGooglePlaceDetailsResult(final String response) {
         final String RESULT                 = "result";
         final String FORMATTED_ADDRESS      = "formatted_address";
@@ -343,14 +419,22 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
                 parseAddressComponents(jsonResult, contentValues);
 
-                contentValues.put(ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS, jsonResult.optString(FORMATTED_ADDRESS));
-                contentValues.put(ShoppingContract.ShopEntry.COLUMN_PHONE_NUMBER, jsonResult.optString(FORMATTED_PHONE_NUMBER));
+                addValueToContentValues(contentValues, ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS, jsonResult.optString(FORMATTED_ADDRESS));
+                addValueToContentValues(contentValues, ShoppingContract.ShopEntry.COLUMN_PHONE_NUMBER, jsonResult.optString(FORMATTED_PHONE_NUMBER));
 
                 parseGeometry(jsonResult, contentValues);
 
-                contentValues.put(ShoppingContract.ShopEntry.COLUMN_NAME, jsonResult.optString(NAME));
-                contentValues.put(ShoppingContract.ShopEntry.COLUMN_PLACE_ID, jsonResult.optString(PLACE_ID));
-                contentValues.put(ShoppingContract.ShopEntry.COLUMN_WEBSITE, jsonResult.optString(WEBSITE));
+                addValueToContentValues(contentValues, ShoppingContract.ShopEntry.COLUMN_NAME, jsonResult.optString(NAME));
+                addValueToContentValues(contentValues, ShoppingContract.ShopEntry.COLUMN_WEBSITE, jsonResult.optString(WEBSITE));
+
+                // Place id must exist
+                contentValues.put(ShoppingContract.ShopEntry.COLUMN_PLACE_ID, jsonResult.getString(PLACE_ID));
+
+                // Parse opening hours
+                parseOpeningHours(jsonResult, contentValues);
+
+                // Fix address components
+                fixAddressComponents(contentValues);
             }
         } catch (Exception e) {
             mErrorMessage = e.toString();
@@ -361,7 +445,13 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     }
 
-    void parseAddressComponents(JSONObject jsonResult, ContentValues contentValues) {
+    private void addValueToContentValues(ContentValues contentValues, String columnName, String value) {
+        if (!value.isEmpty()) {
+            contentValues.put(columnName, value);
+        }
+    }
+
+    private void parseAddressComponents(JSONObject jsonResult, ContentValues contentValues) {
         final String ADDRESS_COMPONENTS     = "address_components";
         final String LONG_NAME              = "long_name";
         final String TYPES                  = "types";
@@ -383,20 +473,30 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                             JSONArray addressTypesArray = jsonAddressArray.getJSONObject(i).getJSONArray(TYPES);
                             if (addressTypesArray.length() > 0) {
                                 String firstAddressType = addressTypesArray.getString(0);
-                                if (firstAddressType.equals(STREET_NUMBER)) {
-                                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER, longName);
-                                } else if (firstAddressType.equals(ROUTE)) {
-                                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET, longName);
-                                } else if (firstAddressType.equals(SUB_LOCALITY_1) || firstAddressType.equals(SUB_LOCALITY)) {
-                                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_CITY, longName);
-                                } else if (firstAddressType.equals(LOCALITY)) {
-                                    if (contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_CITY) == null) {
+                                switch (firstAddressType) {
+                                    case STREET_NUMBER:
+                                        contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER, longName);
+                                        break;
+                                    case ROUTE:
+                                        contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET, longName);
+                                        break;
+                                    case SUB_LOCALITY:     // fall through
+                                    case SUB_LOCALITY_1:
                                         contentValues.put(ShoppingContract.ShopEntry.COLUMN_CITY, longName);
-                                    }
-                                } else if (firstAddressType.equals(COUNTRY)) {
-                                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_COUNTRY, longName);
-                                } else if (firstAddressType.equals(POSTAL_CODE)) {
-                                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_POSTAL_CODE, longName);
+                                        break;
+                                    case LOCALITY:
+                                        if (contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_CITY) == null) {
+                                            contentValues.put(ShoppingContract.ShopEntry.COLUMN_CITY, longName);
+                                        }
+                                        break;
+                                    case COUNTRY:
+                                        contentValues.put(ShoppingContract.ShopEntry.COLUMN_COUNTRY, longName);
+                                        break;
+                                    case POSTAL_CODE:
+                                        contentValues.put(ShoppingContract.ShopEntry.COLUMN_POSTAL_CODE, longName);
+                                        break;
+                                    default:
+                                        // Do nothing
                                 }
                             }
                         }
@@ -432,6 +532,79 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             mErrorMessage = e.toString();
             Log.e(LOG_TAG, "parseGeometry exception", e);
             e.printStackTrace();
+        }
+    }
+
+    void parseOpeningHours(JSONObject jsonResult, ContentValues contentValues) {
+        final String OPENING_HOURS          = "opening_hours";
+        final String OPEN_NOW               = "open_now";
+        final String PERIODS                = "periods";
+        final String CLOSE                  = "close";
+        final String OPEN                   = "open";
+        final String DAY                    = "day";
+        final String TIME                   = "time";
+
+        try {
+            if (jsonResult.has(OPENING_HOURS)) {
+                JSONObject openingHoursObject = jsonResult.getJSONObject(OPENING_HOURS);
+                if (openingHoursObject.has(OPEN_NOW)) {
+                    Boolean openNow = openingHoursObject.optBoolean(OPEN_NOW);
+                    contentValues.put(ShoppingContract.ShopEntry.COLUMN_OPEN_NOW, openNow ? 1 : 0);
+                }
+                if (openingHoursObject.has(PERIODS)) {
+                    String periods = "";
+                    JSONArray periodsArray = openingHoursObject.getJSONArray(PERIODS);
+                    for (int i = 0, end = periodsArray.length(); i < end; ++i) {
+                        JSONObject dayObject = periodsArray.getJSONObject(i);
+                        JSONObject openObject = dayObject.getJSONObject(OPEN);
+                        if (!periods.isEmpty()) periods += StringUtil.DAY_SEP;
+                        periods += openObject.optString(DAY);
+                        periods += StringUtil.DAY_TIME_SEP;
+                        periods += openObject.optString(TIME);
+                        if (dayObject.has(CLOSE)) {
+                            // If there is no close section, the store is always open
+                            periods += StringUtil.OPEN_CLOSE_SEP;
+                            JSONObject closeObject = dayObject.getJSONObject(CLOSE);
+                            periods += closeObject.optString(DAY);
+                            periods += StringUtil.DAY_TIME_SEP;
+                            periods += closeObject.optString(TIME);
+                        }
+                    }
+                    if (!periods.isEmpty()) {
+                        contentValues.put(ShoppingContract.ShopEntry.COLUMN_OPENING_HOURS, periods);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            mErrorMessage = e.toString();
+            Log.e(LOG_TAG, "parseOpeningHours exception", e);
+            e.printStackTrace();
+        }
+    }
+
+    void fixAddressComponents(ContentValues contentValues) {
+        String formattedAddressStr = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_FORMATTED_ADDRESS);
+        if (formattedAddressStr.isEmpty()) return;
+        StringUtil.FormattedAddress formattedAddress = StringUtil.formatAddress(formattedAddressStr);
+        String streetName = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_STREET);
+        String streetNumber = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER);
+        String postalCode = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_POSTAL_CODE);
+        String city = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_CITY);
+        String country = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_COUNTRY);
+        if (streetName == null) {
+            contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET, formattedAddress.mStreet);
+        }
+        if (streetNumber == null) {
+            contentValues.put(ShoppingContract.ShopEntry.COLUMN_STREET_NUMBER, formattedAddress.mStreetNumber);
+        }
+        if (postalCode == null) {
+            contentValues.put(ShoppingContract.ShopEntry.COLUMN_POSTAL_CODE, formattedAddress.mPostalCode);
+        }
+        if (city == null) {
+            contentValues.put(ShoppingContract.ShopEntry.COLUMN_CITY, formattedAddress.mCity);
+        }
+        if (country == null) {
+            contentValues.put(ShoppingContract.ShopEntry.COLUMN_COUNTRY, formattedAddress.mCountry);
         }
     }
 }

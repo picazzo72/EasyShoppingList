@@ -1,9 +1,5 @@
 package com.dandersen.app.easyshoppinglist;
 
-/**
- * Created by Dan on 28-05-2016.
- */
-
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
@@ -16,6 +12,7 @@ import android.widget.TextView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.data.Utilities;
+import com.dandersen.app.easyshoppinglist.utils.StringUtil;
 
 import java.util.ArrayList;
 
@@ -44,14 +41,16 @@ public class ShopAdapter extends CursorAdapter {
      * Cache of the children views for a shop list item.
      */
     private static class ViewHolder {
+        public final ImageView openNowView;
         public final TextView shopNameView;
         public final TextView shopAddressView;
         public final ImageView shoppingCartView;
 
         public ViewHolder(View view) {
-            shopNameView = (TextView) view.findViewById(R.id.list_item_shop_name);
-            shopAddressView = (TextView) view.findViewById(R.id.list_item_shop_address);
-            shoppingCartView = (ImageView) view.findViewById(R.id.list_item_shop_shopping_cart);
+            openNowView         = (ImageView) view.findViewById(R.id.list_item_shop_open_now);
+            shopNameView        = (TextView) view.findViewById(R.id.list_item_shop_name);
+            shopAddressView     = (TextView) view.findViewById(R.id.list_item_shop_address);
+            shoppingCartView    = (ImageView) view.findViewById(R.id.list_item_shop_shopping_cart);
         }
     }
 
@@ -83,6 +82,21 @@ public class ShopAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
+        // Open now
+        if (cursor.isNull(ShopFragment.COL_OPEN_NOW)) {
+            viewHolder.openNowView.setVisibility(View.GONE);
+        }
+        else {
+            viewHolder.openNowView.setVisibility(View.VISIBLE);
+            int openNow = cursor.getInt(ShopFragment.COL_OPEN_NOW);
+            if (openNow == 0) {
+                viewHolder.openNowView.setImageResource(R.drawable.ic_schedule_no_black_18dp);
+            }
+            else {
+                viewHolder.openNowView.setImageResource(R.drawable.ic_schedule_black_18dp);
+            }
+        }
+
         // Shop name
         String shopName = cursor.getString(ShopFragment.COL_SHOP_NAME);
         viewHolder.shopNameView.setText(shopName);
@@ -90,9 +104,8 @@ public class ShopAdapter extends CursorAdapter {
         String streetName = cursor.getString(ShopFragment.COL_SHOP_STREET);
         String streetNumber = cursor.getString(ShopFragment.COL_SHOP_STREET_NUMBER);
         String city = cursor.getString(ShopFragment.COL_SHOP_CITY);
-        String formattedAddress = cursor.getString(ShopFragment.COL_FORMATTED_ADDRESS);
-        viewHolder.shopAddressView.setText(Utilities.buildShopAddress(
-                streetName, streetNumber, city, formattedAddress));
+        viewHolder.shopAddressView.setText(StringUtil.buildShopAddress(
+                streetName, streetNumber, city));
 
         if (mActionMode) {
             int position = cursor.getPosition();
@@ -132,7 +145,7 @@ public class ShopAdapter extends CursorAdapter {
         final String bind = "?";
 
         if (!itemsToDelete.isEmpty()) {
-            ArrayList<String> bindIdList = new ArrayList();
+            ArrayList<String> bindIdList = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             for (Integer index : itemsToDelete) {
                 Cursor cursor = (Cursor) getItem(index);
@@ -164,7 +177,7 @@ public class ShopAdapter extends CursorAdapter {
 
     public void selectView(int position, boolean value) {
         if (value)
-            mSelectedItemsIds.put(position, value);
+            mSelectedItemsIds.put(position, true);
         else
             mSelectedItemsIds.delete(position);
         notifyDataSetChanged();
