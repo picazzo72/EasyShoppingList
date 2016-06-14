@@ -2,10 +2,7 @@ package com.dandersen.app.easyshoppinglist.data;
 
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
-import android.content.ContentProviderOperation;
-import android.content.ContentProviderResult;
 import android.content.ContentValues;
-import android.content.OperationApplicationException;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,8 +10,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
-
-import java.util.ArrayList;
 
 /**
  * Created by Dan on 26-05-2016.
@@ -97,6 +92,7 @@ public class ShoppingProvider extends ContentProvider {
     @Override
     public boolean onCreate() {
         mOpenHelper = ShoppingDbHelper.getInstance(getContext());
+        Log.i(LOG_TAG, "DSA LOG - onCreate - ShoppingDbHelper created");
         return true;
     }
 
@@ -136,7 +132,7 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getCategory(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v(LOG_TAG, "DSA LOG - Category list");
+        Log.i(LOG_TAG, "DSA LOG - Category list");
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.CategoryEntry.TABLE_NAME,
@@ -151,7 +147,7 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getProduct(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v(LOG_TAG, "DSA LOG - Product list");
+        Log.i(LOG_TAG, "DSA LOG - Product list");
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ProductEntry.TABLE_NAME,
@@ -180,8 +176,6 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     private Cursor getProductByCategory(Uri uri, String[] projection, String selection, String sortOrder) {
-        final String COMMA_SEP = ", ";
-
         String category = ShoppingContract.ProductEntry.getCategoryFromUri(uri);
 
         String[] selectionArgs = new String[]{ category };
@@ -193,12 +187,7 @@ public class ShoppingProvider extends ContentProvider {
         }
         selection += sCategorySelection;
 
-        StringBuilder selectionArgsBuilder = new StringBuilder();
-        for (String selectionArg : selectionArgs) {
-            selectionArgsBuilder.append(selectionArg);
-            selectionArgsBuilder.append(COMMA_SEP);
-        }
-        Log.v(LOG_TAG, "DSA LOG - Product by category '" + selection + "' binds: " + selectionArgsBuilder.toString());
+        Log.i(LOG_TAG, "DSA LOG - Product by category '" + selection + "' binds: " + stringArrayToString(selectionArgs));
 
         return sProductByCategoryQueryBuilder.query(
                 mOpenHelper.getReadableDatabase(),
@@ -213,7 +202,7 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getShoppingList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v(LOG_TAG, "DSA LOG - Shopping_list list");
+        Log.i(LOG_TAG, "DSA LOG - Shopping_list list");
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShoppingListEntry.TABLE_NAME,
@@ -228,7 +217,7 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getShopList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v(LOG_TAG, "DSA LOG - Shop list");
+        Log.i(LOG_TAG, "DSA LOG - Shop list '" + stringArrayToString(projection) + "'");
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShopEntry.TABLE_NAME,
@@ -242,19 +231,12 @@ public class ShoppingProvider extends ContentProvider {
     }
 
     private Cursor getShopEntry(Uri uri, String[] projection) {
-        final String COMMA_SEP = ", ";
-
         String shopIdFromUri = ShoppingContract.ShopEntry.getShopIdFromUri(uri);
 
         String selection = ShoppingContract.ShopEntry._ID + "= ?";
         String[] selectionArgs = new String[]{ shopIdFromUri };
 
-        StringBuilder selectionArgsBuilder = new StringBuilder();
-        for (String selectionArg : selectionArgs) {
-            selectionArgsBuilder.append(selectionArg);
-            selectionArgsBuilder.append(COMMA_SEP);
-        }
-        Log.v(LOG_TAG, "DSA LOG - Shop by id '" + selection + "' binds: " + selectionArgsBuilder.toString());
+        Log.i(LOG_TAG, "DSA LOG - Shop by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShopEntry.TABLE_NAME,
@@ -269,7 +251,7 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getShoppingListProducts(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.v(LOG_TAG, "DSA LOG - Shopping list products rel");
+        Log.i(LOG_TAG, "DSA LOG - Shopping list products rel");
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShoppingListProductsEntry.TABLE_NAME,
@@ -454,7 +436,7 @@ public class ShoppingProvider extends ContentProvider {
             }
         }
         finally {
-            db.close();
+            //db.close();
         }
 
         // Student: A null value deletes all rows.  In my implementation of this, I only notified
@@ -513,7 +495,7 @@ public class ShoppingProvider extends ContentProvider {
             }
         }
         finally {
-            db.close();
+            //db.close();
         }
 
         // Notify the listeners if rows were updated
@@ -545,6 +527,7 @@ public class ShoppingProvider extends ContentProvider {
                     db.setTransactionSuccessful();
                 } finally {
                     db.endTransaction();
+                    //db.close();
                 }
                 if (getContext() != null) {
                     getContext().getContentResolver().notifyChange(uri, null);
@@ -562,6 +545,20 @@ public class ShoppingProvider extends ContentProvider {
     @TargetApi(11)
     public void shutdown() {
         mOpenHelper.close();
+        Log.i(LOG_TAG, "DSA LOG - shutdown - Database open helper was closed");
         super.shutdown();
+    }
+
+    private String stringArrayToString(String[] selectionArgs) {
+        final String COMMA_SEP = ", ";
+
+        StringBuilder selectionArgsBuilder = new StringBuilder();
+        if (selectionArgs != null) {
+            for (String selectionArg : selectionArgs) {
+                if (selectionArgsBuilder.length() != 0) selectionArgsBuilder.append(COMMA_SEP);
+                selectionArgsBuilder.append(selectionArg);
+            }
+        }
+        return selectionArgsBuilder.toString();
     }
 }

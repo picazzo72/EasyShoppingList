@@ -15,6 +15,7 @@ import com.dandersen.app.easyshoppinglist.prefs.Settings;
 
 /**
  * Created by Dan on 27-05-2016.
+ * Button fragment for the main button bar in the App.
  */
 public class ButtonFragment extends Fragment {
 
@@ -91,6 +92,8 @@ public class ButtonFragment extends Fragment {
 
         setSelectedView(Settings.getInstance().getSelectedView());
 
+        if (getView() == null) return;
+
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
 
         switch (Settings.getInstance().getSelectedView()) {
@@ -120,8 +123,6 @@ public class ButtonFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        Log.v(LOG_TAG, "DSA LOG - onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_buttons, container, false);
 
@@ -170,6 +171,8 @@ public class ButtonFragment extends Fragment {
     }
 
     private void setSelectedView(SelectedViewEnum pos) {
+        if (getView() == null) return;
+
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
 
         restoreButtons();
@@ -201,6 +204,8 @@ public class ButtonFragment extends Fragment {
     }
 
     private void restoreButtons() {
+        if (getView() == null) return;
+
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
         viewHolder.currentListIcon.setImageResource(R.drawable.ic_shopping_cart_black_36dp);
         viewHolder.shoppingListIcon.setImageResource(R.drawable.ic_list_black_36dp);

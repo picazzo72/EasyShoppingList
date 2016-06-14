@@ -133,7 +133,7 @@ public class Utilities {
             finally {
                 db.endTransaction();
             }
-            Log.v(LOG_TAG, "DSA LOG - " + insertCategoriesCount + " categories inserted, "
+            Log.i(LOG_TAG, "DSA LOG - " + insertCategoriesCount + " categories inserted, "
                     + insertProductsCount + " products inserted");
         }
 

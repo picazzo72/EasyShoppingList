@@ -196,7 +196,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 "_idx on " + ShoppingContract.ShopEntry.TABLE_NAME + " (" +
                 ShoppingContract.ShopEntry.COLUMN_PLACE_ID + ")");
 
-        Log.v(LOG_TAG, "DSA LOG - Databases have been created");
+        Log.i(LOG_TAG, "DSA LOG - Databases have been created");
     }
 
     @Override

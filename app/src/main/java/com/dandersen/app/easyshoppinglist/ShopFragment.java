@@ -28,6 +28,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.prefs.Settings;
 
 import java.util.ArrayList;
 
@@ -124,6 +125,8 @@ public class ShopFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "DSA LOG - onCreateView");
+
         // The CursorAdapter will take data from a source and
         // use it to populate the ListView it's attached to
         mShopAdapter = new ShopAdapter(getActivity(), null, 0);
@@ -141,7 +144,7 @@ public class ShopFragment extends Fragment
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView adapterView, View view, int position, long l) {
-                Log.v(LOG_TAG, "DSA LOG - onItemClick " + position);
+                Log.i(LOG_TAG, "DSA LOG - onItemClick " + position);
 
                 // CursorAdapter returns a cursor at the correct position for getItem(), or null
                 // if it cannot seek to that position.
@@ -185,7 +188,6 @@ public class ShopFragment extends Fragment
         fListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long rowId) {
-                Log.v(LOG_TAG, "DSA LOG - onItemLongClick");
                 fListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
                 // We set the item to be checked to activate the action mode immediately
@@ -202,8 +204,6 @@ public class ShopFragment extends Fragment
             @Override
             public void onItemCheckedStateChanged(ActionMode mode,
                                                   int position, long id, boolean checked) {
-                Log.v(LOG_TAG, "DSA LOG - onItemCheckedStateChanged");
-
                 // Prints the count of selected Items in title
                 mode.setTitle(fListView.getCheckedItemCount() + " selected");
 
@@ -218,7 +218,6 @@ public class ShopFragment extends Fragment
              */
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                Log.v(LOG_TAG, "DSA LOG - onActionItemClicked");
                 if (item.getItemId() == R.id.action_delete){
                     SparseBooleanArray selected = mShopAdapter.getSelectedIds();
                     short size = (short)selected.size();
@@ -254,8 +253,9 @@ public class ShopFragment extends Fragment
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 // Hide action bar
-                if (getActivity() != null && ((AppCompatActivity)getActivity()).getSupportActionBar() != null) {
-                    ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
+                AppCompatActivity activity = (AppCompatActivity) getActivity();
+                if (activity != null && activity.getSupportActionBar() != null) {
+                    activity.getSupportActionBar().hide();
                 }
 
                 // Show contextual action menu
@@ -276,8 +276,9 @@ public class ShopFragment extends Fragment
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 // Show action bar
-                if (getActivity() != null && ((AppCompatActivity)getActivity()).getSupportActionBar() != null) {
-                    ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+                AppCompatActivity activity = (AppCompatActivity) getActivity();
+                if (activity != null && activity.getSupportActionBar() != null) {
+                    activity.getSupportActionBar().show();
                 }
 
                 // Notify activity that action mode is done
@@ -285,8 +286,6 @@ public class ShopFragment extends Fragment
 
                 // Notify adapter that action mode is done
                 mShopAdapter.setActionMode(false);
-
-
             }
 
             /**
@@ -295,7 +294,6 @@ public class ShopFragment extends Fragment
              */
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                Log.v(LOG_TAG, "DSA LOG - onPrepareActionMode");
                 return false;
             }
         });
@@ -314,7 +312,7 @@ public class ShopFragment extends Fragment
                         mShopAdapter.remove(itemsToDelete);
 
                         // Re-initalize loader after data was removed
-                        getLoaderManager().initLoader(CURSOR_LOADER_ID, null, fShopFragment).forceLoad();
+                        getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, fShopFragment).forceLoad();
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -336,9 +334,9 @@ public class ShopFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
+        Log.i(LOG_TAG, "DSA LOG - onLoadFinished");
 
-        mListView.invalidateViews();
+        //mListView.invalidateViews();
 
         // Select first item, last selected or new product if one of these are available
         if (mPosition != ListView.INVALID_POSITION || mShopId > 0) {
@@ -377,7 +375,7 @@ public class ShopFragment extends Fragment
 
         Uri uri = ShoppingContract.ShopEntry.CONTENT_URI;
 
-        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for shop list: " + uri.toString());
+        Log.i(LOG_TAG, "DSA LOG - onCreateLoader - URI for shop list: " + uri.toString());
 
         return new CursorLoader(getActivity(),
                 uri,                   // URI
@@ -408,6 +406,13 @@ public class ShopFragment extends Fragment
             ((ShopFragment.Callback)getActivity()).onShopListUpdate();
             return true;
         }
+        else if (id == R.id.action_reload) {
+            // First let settings know that we wish to reset automatic search
+            Settings.getInstance().setNearbySearchAutomaticDone(false);
+
+            ((ShopFragment.Callback)getActivity()).onShopListUpdate();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -427,7 +432,7 @@ public class ShopFragment extends Fragment
             if (data != null) {
                 mShopId = data.getLongExtra(ShopFragment.SHOP_ID_TAG, 0);
                 if (mShopId > 0) {
-                    getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this).forceLoad();
+                    getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this).forceLoad();
                 }
             }
         } catch (Exception ex) {

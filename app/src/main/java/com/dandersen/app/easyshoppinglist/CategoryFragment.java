@@ -20,6 +20,7 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 
 /**
  * Created by Dan on 27-05-2016.
+ * Category fragment for displaying the category list.
  */
 public class CategoryFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -160,7 +161,7 @@ public class CategoryFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
+        Log.i(LOG_TAG, "DSA LOG - onLoadFinished");
 
 //        // Select first item or last selected if this is available
 //        int listSelection = 0;
@@ -206,7 +207,7 @@ public class CategoryFragment extends Fragment
         // Build Uri
         Uri categoryUri = ShoppingContract.CategoryEntry.CONTENT_URI;
 
-        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for category list: " + categoryUri.toString());
+        Log.i(LOG_TAG, "DSA LOG - onCreateLoader - URI for category list: " + categoryUri.toString());
 
         return new CursorLoader(getActivity(),
                 categoryUri, // URI

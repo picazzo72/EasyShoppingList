@@ -15,6 +15,7 @@
     <string name="action_select_all">Select all</string>
     <string name="action_edit">Edit</string>
     <string name="action_refresh">Refresh</string>
+    <string name="action_reload">Reload</string>
 
     // Setting keys
     <string name="pref_key_reset_product_database">prefKeyResetDatabase</string>
@@ -55,5 +56,9 @@
 
     // Opening hours
     <string name="opening_hours_open_until">open until</string>
+
+    // Toasts
+    <string name="toast_fetching_stores">Fetching stores</string>
+    <string name="toast_updating_stores">Updating stores</string>
 
 </resources>

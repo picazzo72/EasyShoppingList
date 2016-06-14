@@ -3,11 +3,11 @@ package com.dandersen.app.easyshoppinglist;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -16,7 +16,6 @@ import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
 import com.dandersen.app.easyshoppinglist.prefs.Settings;
-
 import com.dandersen.app.easyshoppinglist.prefs.SettingsActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,7 +34,7 @@ public class MainActivity extends AppCompatActivity
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
     private static boolean sFetchShopTaskHasRun = false;
-    private static GoogleApiClient sGoogleApiClient = null;
+    private GoogleApiClient mGoogleApiClient = null;
     private static FetchShopTask sFetchShopTask = null;
 
     // Timer for FetchShopTask
@@ -59,21 +58,9 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
+        // Reset FetchShopTask if it was saved from last MainActivity
         sFetchShopTask = (FetchShopTask) getLastCustomNonConfigurationInstance();
-
-        if (sFetchShopTask == null) {
-            if (!sFetchShopTaskHasRun) {
-                if (sGoogleApiClient == null) {
-                    // Create an instance of GoogleApiClient.
-                    sGoogleApiClient = new GoogleApiClient.Builder(this)
-                            .addApi(LocationServices.API)
-                            .addConnectionCallbacks(this)
-                            .addOnConnectionFailedListener(this)
-                            .build();
-                }
-            }
-        }
-        else {
+        if (sFetchShopTask != null) {
             sFetchShopTask.attach(this);
         }
 
@@ -94,8 +81,8 @@ public class MainActivity extends AppCompatActivity
         sFetchShopTimerTask = new TimerTask() {
             @Override
             public void run() {
-                // Connect the Google API client.
-                sGoogleApiClient.reconnect();
+                // Reconnect the Google API client.
+                getGoogleApiClient().reconnect();
             }
         };
 
@@ -302,7 +289,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onShopListUpdate() {
-        sGoogleApiClient.reconnect();
+        getGoogleApiClient().reconnect();
     }
 
     /**
@@ -313,11 +300,13 @@ public class MainActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
 
-        if (!sFetchShopTaskHasRun || (sFetchShopTask != null && !sFetchShopTask.mTaskFinished)) {
+        Log.i(LOG_TAG, "DSA LOG - onStart");
+
+        if (!sFetchShopTaskHasRun) {
             sFetchShopTaskHasRun = true;
 
             // Connect the client.
-            sGoogleApiClient.connect();
+            getGoogleApiClient().connect();
         }
     }
 
@@ -327,35 +316,52 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     protected void onStop() {
+        Log.i(LOG_TAG, "DSA LOG - onStop");
         // Disconnecting the client invalidates it.
-        if (sGoogleApiClient != null) {
-            sGoogleApiClient.disconnect();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+            mGoogleApiClient = null;
+            Log.i(LOG_TAG, "DSA LOG - onStop - GoogleApiClient disconnected");
         }
         if (sFetchShopTask != null) {
-            if (sFetchShopTask.getStatus() == AsyncTask.Status.FINISHED) {
-                sFetchShopTask = null;
+            if (sFetchShopTask.getStatus() == AsyncTask.Status.RUNNING) {
+                Log.i(LOG_TAG, "DSA LOG - onStop - FetchShopTask cancelled");
+                sFetchShopTask.cancel(true /*mayInterruptIfRunning*/);
             }
         }
         super.onStop();
     }
 
+    private GoogleApiClient getGoogleApiClient() {
+        if (mGoogleApiClient == null) {
+            // Create an instance of GoogleApiClient.
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+            Log.i(LOG_TAG, "DSA LOG - New Google Api Client created");
+        }
+        return mGoogleApiClient;
+    }
     /**
      * Callback from Google API Client when we are connected to Google Services
      * @param bundle Bundle from API
      */
     @Override
     public void onConnected(Bundle bundle) {
-        Log.v(LOG_TAG, "DSA LOG - Connected to Google Location Api");
+        Log.i(LOG_TAG, "DSA LOG - Connected to Google Location Api");
 
         try {
             // Check that the task is not already running
             if (sFetchShopTask != null) {
                 if (sFetchShopTask.getStatus() == AsyncTask.Status.RUNNING) {
+                    Log.i(LOG_TAG, "DSA LOG - onConnected - FetchShopTask already running");
                     return;
                 }
             }
 
-            android.location.Location location = LocationServices.FusedLocationApi.getLastLocation(sGoogleApiClient);
+            android.location.Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
             if (location != null) {
                 String latitude = Double.toString(location.getLatitude());
@@ -364,10 +370,16 @@ public class MainActivity extends AppCompatActivity
                 Log.i(LOG_TAG, "DSA LOG - Latitude: " + latitude + " - Longtitude: " + longtitude);
 
                 if (sFetchShopTask == null || sFetchShopTask.getStatus() == AsyncTask.Status.FINISHED) {
-                    sFetchShopTask = new FetchShopTask(this, getContentResolver());
+                    sFetchShopTask = new FetchShopTask(this);
+                    Log.i(LOG_TAG, "DSA LOG - onConnected - new FetchShopTask created");
                 }
 
-                Toast.makeText(this, "Fetching stores", Toast.LENGTH_SHORT).show();
+                if (Settings.getInstance().getNearbySearchAutomaticDone()) {
+                    Toast.makeText(this, getString(R.string.toast_updating_stores), Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(this, getString(R.string.toast_fetching_stores), Toast.LENGTH_SHORT).show();
+                }
 
                 // Execute fetch weather task
                 sFetchShopTask.execute(latitude + "," + longtitude);

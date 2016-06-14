@@ -24,6 +24,7 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 
 /**
  * Created by Dan on 28-05-2016.
+ * Product fragment for displaying the product list.
  */
 public class ProductFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -93,7 +94,7 @@ public class ProductFragment extends Fragment
         /**
          * ProductFragmentCallback for when an item has been selected.
          */
-        public void onItemSelected(Uri dateUri);
+        void onItemSelected(Uri dateUri);
     }
 
 
@@ -197,7 +198,7 @@ public class ProductFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.v(LOG_TAG, "DSA LOG - onLoadFinished");
+        Log.i(LOG_TAG, "DSA LOG - onLoadFinished");
 
         // Select first item, last selected or new product if one of these are available
         if (mPosition != ListView.INVALID_POSITION || mProductId > 0) {
@@ -234,7 +235,7 @@ public class ProductFragment extends Fragment
         // Sort order: Acending, by name
         String sortOrder = PRODUCT_COLUMNS[COL_PRODUCT_NAME] + " ASC";
 
-        Log.v(LOG_TAG, "DSA LOG - onCreateLoader - URI for product list: " + mUri.toString());
+        Log.i(LOG_TAG, "DSA LOG - onCreateLoader - URI for product list: " + mUri.toString());
 
         return new CursorLoader(getActivity(),
                 mUri,                  // URI

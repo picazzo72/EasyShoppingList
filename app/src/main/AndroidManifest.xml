@@ -54,6 +54,13 @@
                 android:value="com.dandersen.app.easyshoppinglist.MainActivity" />
         </activity>
 
+        <provider
+            android:name=".data.ShoppingProvider"
+            android:authorities="com.dandersen.app.easyshoppinglist"
+            android:enabled="true"
+            android:exported="true">
+        </provider>
+
     </application>
 
 </manifest>

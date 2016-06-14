@@ -1,7 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
 import android.content.ContentProviderOperation;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -12,6 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
 import com.dandersen.app.easyshoppinglist.prefs.Settings;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;
@@ -43,7 +43,6 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
     private final String LOG_TAG = FetchShopTask.class.getSimpleName();
 
     private MainActivity mActivity;
-    private ContentResolver mContentResolver;
 
     // Error message to display to the user when control is transferred to ui thread.
     private String mErrorMessage = null;
@@ -65,9 +64,8 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             }
     };
 
-    public FetchShopTask(MainActivity activity, ContentResolver contentResolver) {
+    public FetchShopTask(MainActivity activity) {
         mActivity = activity;
-        mContentResolver = contentResolver;
 
         // Install the all-trusting trust manager
         try {
@@ -102,7 +100,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
     protected ContentValues[] doInBackground(String... params) {
         // If there's no location, there's nothing to look up.  Verify size of params.
         if (params.length == 0) {
-            Log.v(LOG_TAG, "DSA LOG - doInBackground - no params");
+            Log.i(LOG_TAG, "DSA LOG - doInBackground - no params");
             return null;
         }
         String location = params[0];
@@ -128,7 +126,8 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         HashSet<String> placeIdsInDb = new HashSet<>();
         Cursor c = null;
         try {
-            c = mContentResolver.query(
+            if (mActivity == null) return null;
+            c = mActivity.getContentResolver().query(
                     ShoppingContract.ShopEntry.CONTENT_URI,
                     new String[]{ShoppingContract.ShopEntry.COLUMN_PLACE_ID},
                     null, // cols for "where" clause
@@ -153,6 +152,9 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         // ArrayList for new inserts
         ArrayList<ContentValues> contentValuesArray = new ArrayList<>();
 
+        // Are we searching for new stores?
+        boolean searchForNewStores = !Settings.getInstance().getNearbySearchAutomaticDone();
+
         // Loop over stores
         Iterator<String> nearbyPlacesIterator = nearbyPlaces.keySet().iterator();
         while (nearbyPlacesIterator.hasNext()) {
@@ -169,13 +171,15 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 }
             }
             else {
-                // Request place details from Google API
-                String placeDetailsJsonStr = getGoogleApiResponse(buildPlaceDetailsUri(placeId));
+                if (searchForNewStores) {
+                    // Request place details from Google API
+                    String placeDetailsJsonStr = getGoogleApiResponse(buildPlaceDetailsUri(placeId));
 
-                // Parse place details
-                ContentValues contentValues = parseGooglePlaceDetailsResult(placeDetailsJsonStr);
-                if (contentValues != null) {
-                    contentValuesArray.add(contentValues);
+                    // Parse place details
+                    ContentValues contentValues = parseGooglePlaceDetailsResult(placeDetailsJsonStr);
+                    if (contentValues != null) {
+                        contentValuesArray.add(contentValues);
+                    }
                 }
             }
         }
@@ -183,7 +187,8 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         // Update open now
         if (!ops.isEmpty()) {
             try {
-                mContentResolver.applyBatch(ShoppingContract.CONTENT_AUTHORITY, ops);
+                if (mActivity == null) return null;
+                mActivity.getContentResolver().applyBatch(ShoppingContract.CONTENT_AUTHORITY, ops);
             }
             catch (Exception e){
                 mErrorMessage = e.toString();
@@ -206,42 +211,44 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
     @Override
     protected void onPostExecute(ContentValues[] contentValuesList) {
-        try {
-            if (mActivity == null) return;
+        if (mActivity == null) return;
 
-            if (contentValuesList == null) {
-                if (mErrorMessage != null) {
-                    Toast.makeText(mActivity, mErrorMessage, Toast.LENGTH_LONG).show();
-                }
-                return;
+        if (contentValuesList == null) {
+            if (mErrorMessage != null) {
+                Toast.makeText(mActivity, mErrorMessage, Toast.LENGTH_LONG).show();
             }
-
-            final ContentValues[] fContentValuesList = contentValuesList;
-
-            new AlertDialog.Builder(mActivity)
-                    .setCancelable(true)
-                    .setTitle(R.string.dialog_import_shops_title)
-                    .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            mTaskFinished = true;
-                            int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
-                            Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop entries added to database");
-                        }
-                    })
-                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            mTaskFinished = true;
-                            dialog.cancel();
-                        }
-                    })
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
+            else {
+                // We only search automatically for nearby grocery stores once!
+                Settings.getInstance().setNearbySearchAutomaticDone(true);
+            }
+            return;
         }
-        finally {
-            mContentResolver = null;
-            mActivity = null;
+        else {
+            // We only search automatically for nearby grocery stores once!
+            Settings.getInstance().setNearbySearchAutomaticDone(true);
         }
+
+        final ContentValues[] fContentValuesList = contentValuesList;
+
+        new AlertDialog.Builder(mActivity)
+                .setCancelable(true)
+                .setTitle(R.string.dialog_import_shops_title)
+                .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mTaskFinished = true;
+                        int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
+                        Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop entries added to database");
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mTaskFinished = true;
+                        dialog.cancel();
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     private Uri buildNearbySearchUri(String location, @Nullable String nextPageToken) {
@@ -305,7 +312,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
             StringBuilder stringBuilder = new StringBuilder();
             if (inputStream == null) {
                 // Nothing to do.
-                Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - no inputStream");
+                Log.i(LOG_TAG, "DSA LOG - getGoogleApiResponse - no inputStream");
                 return null;
             }
             reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -321,7 +328,7 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
 
             if (stringBuilder.length() == 0) {
                 // Stream was empty.  No point in parsing.
-                Log.v(LOG_TAG, "DSA LOG - getGoogleApiResponse - empty stream");
+                Log.i(LOG_TAG, "DSA LOG - getGoogleApiResponse - empty stream");
                 return null;
             }
             placesJsonStr = stringBuilder.toString();

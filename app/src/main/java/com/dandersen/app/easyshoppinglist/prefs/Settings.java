@@ -8,19 +8,27 @@ import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
 
 /**
  * Created by Dan on 05-06-2016.
+ * Settings manager.
  */
 public class Settings {
 
     private SharedPreferences mSharedPreferences;
     private boolean mSettingsLoaded = false;
 
+    // Tag for selected view
+    private final String SELECTED_VIEW = "selected_view";
+
+    // Which view were last selected by the user?
     private SelectedViewEnum mSelectedView = SelectedViewEnum.CurrentList;
+
+    // Tag for nearby search automatic
+    private final String NEARBY_SEARCH_AUTOMATIC = "nearby_search_automatic";
+
+    // Have nearby search already run automatically?
+    private boolean mNearbySearchAutomatic = false;
 
     // The search radius for Google Places API nearby search
     private int mNearbySearchRadius = 5000;
-
-    // Tag for selected button
-    private static final String SELECTED_VIEW = "selected_view";
 
     // Key for nearby search radius
     private String mNearbySearchRadiusKey;
@@ -54,13 +62,33 @@ public class Settings {
 
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.putInt(SELECTED_VIEW, mSelectedView.ordinal());
-        editor.commit();
+        editor.apply();
     }
 
     public SelectedViewEnum getSelectedView() {
         if (!mSettingsLoaded) throw new AssertionError("Settings have not been loaded");
 
         return mSelectedView;
+    }
+
+    /**
+     * Sets if the automatic nearby search for grocery stores have been done.
+     * @param done true if the search have been done.
+     */
+    public void setNearbySearchAutomaticDone(boolean done) {
+        mNearbySearchAutomatic = done;
+
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putBoolean(NEARBY_SEARCH_AUTOMATIC, mNearbySearchAutomatic);
+        editor.apply();
+    }
+
+    /**
+     * Gets if the automatic nearby search for grocery stores have been done.
+     * @return true if automatic nearby search have been done.
+     */
+    public boolean getNearbySearchAutomaticDone() {
+        return mNearbySearchAutomatic;
     }
 
     public void setNearbySearchRadius(int nearbySearchRadius) {
@@ -70,7 +98,7 @@ public class Settings {
 
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.putInt(mNearbySearchRadiusKey, mNearbySearchRadius);
-        editor.commit();
+        editor.apply();
     }
 
     public int getNearbySearchRadius() {
@@ -80,14 +108,18 @@ public class Settings {
     }
 
     void loadSettings() {
-        if (mSettingsLoaded) return;
+        synchronized (this) {
+            if (mSettingsLoaded) return;
 
-        mSelectedView = SelectedViewEnum.fromInteger(Integer.valueOf(
-                mSharedPreferences.getInt(SELECTED_VIEW, SelectedViewEnum.CurrentList.ordinal())));
+            mSelectedView = SelectedViewEnum.fromInteger(
+                    mSharedPreferences.getInt(SELECTED_VIEW, SelectedViewEnum.CurrentList.ordinal()));
 
-        mNearbySearchRadius = mSharedPreferences.getInt(mNearbySearchRadiusKey, 5000);
+            mNearbySearchAutomatic = mSharedPreferences.getBoolean(NEARBY_SEARCH_AUTOMATIC, false);
 
-        mSettingsLoaded = true;
+            mNearbySearchRadius = mSharedPreferences.getInt(mNearbySearchRadiusKey, 5000);
+
+            mSettingsLoaded = true;
+        }
     }
 
 }
