@@ -2,7 +2,9 @@ package com.dandersen.app.easyshoppinglist;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,6 +22,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class MainActivity extends AppCompatActivity
         implements  GoogleApiClient.ConnectionCallbacks,
                     GoogleApiClient.OnConnectionFailedListener,
@@ -29,12 +34,21 @@ public class MainActivity extends AppCompatActivity
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
 
-    private static GoogleApiClient mGoogleApiClient;
-    private FetchShopTask mFetchShopTask = null;
+    private static boolean sFetchShopTaskHasRun = false;
+    private static GoogleApiClient sGoogleApiClient = null;
+    private static FetchShopTask sFetchShopTask = null;
+
+    // Timer for FetchShopTask
+    private static Timer sFetchShopTaskTimer = new Timer();
+    private static TimerTask sFetchShopTimerTask = null;
+    private final int FETCH_SHOP_TIMER_INTERVAL = 5 * 60 * 1000;  // Update shops every 5th minut
 
     private boolean mTwoPaneLayout = false;
 
     private static Uri mCategoryProductsUri;
+
+    // Tag for DetailShopFragment in two pane layout mode
+    private String DETAIL_SHOP_FRAGMENT_TAG = "DETAIL_SHOP_FRAGMENT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,65 +59,64 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
-        mFetchShopTask = (FetchShopTask) getLastCustomNonConfigurationInstance();
+        sFetchShopTask = (FetchShopTask) getLastCustomNonConfigurationInstance();
 
-        if (mFetchShopTask == null) {
-            // Create an instance of GoogleApiClient.
-            if (mGoogleApiClient == null) {
-                mGoogleApiClient = new GoogleApiClient.Builder(this)
-                        .addApi(LocationServices.API)
-                        .addConnectionCallbacks(this)
-                        .addOnConnectionFailedListener(this)
-                        .build();
+        if (sFetchShopTask == null) {
+            if (!sFetchShopTaskHasRun) {
+                if (sGoogleApiClient == null) {
+                    // Create an instance of GoogleApiClient.
+                    sGoogleApiClient = new GoogleApiClient.Builder(this)
+                            .addApi(LocationServices.API)
+                            .addConnectionCallbacks(this)
+                            .addOnConnectionFailedListener(this)
+                            .build();
+                }
             }
         }
         else {
-            mFetchShopTask.attach(this);
+            sFetchShopTask.attach(this);
         }
+
+        // Initialize timer
+        initializeFetchShopTimer();
 
         // Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setElevation(0f);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setElevation(0f);
+        }
+    }
 
-//        // If we're being restored from a previous state, then we don't need to do anything
-//        // and should return or else we could end up with overlapping fragments.
-//        if (savedInstanceState == null) {
-//            // Create a new Fragment to be placed in the activity layout
-//            CategoryFragment firstFragment = new CategoryFragment();
-//
-//            // In case this activity was started with special instructions from an
-//            // Intent, pass the Intent's extras to the fragment as arguments
-//            firstFragment.setArguments(getIntent().getExtras());
-//
-//            // Add the fragment to the 'fragment_container' FrameLayout
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.fragment_container, firstFragment).commit();
-//        }
+    private void initializeFetchShopTimer() {
+        if (sFetchShopTimerTask != null) return;
+
+        sFetchShopTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                // Connect the Google API client.
+                sGoogleApiClient.reconnect();
+            }
+        };
+
+        sFetchShopTaskTimer.schedule(sFetchShopTimerTask, FETCH_SHOP_TIMER_INTERVAL, FETCH_SHOP_TIMER_INTERVAL);
     }
 
     /**
      * Used to save the AsyncTask when this Activity is begin destroyed to give
      * to the new MainActivity. This handles eg. screen rotation.
-     * @return: Any Object holding the desired state to propagate to the next activity instance. In this case the FetchShopTask.
+     * The method is described on the following web page:
+     * http://stackoverflow.com/questions/3821423/background-task-progress-dialog-orientation-change-is-there-any-100-working/3821998#3821998
+     * @return Any Object holding the desired state to propagate to the next activity instance. In this case the FetchShopTask.
      */
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
-        if (mFetchShopTask != null) {
-            mFetchShopTask.detach();
+        if (sFetchShopTask != null) {
+            sFetchShopTask.detach();
 
-            return mFetchShopTask;
+            return sFetchShopTask;
         }
         return super.onRetainCustomNonConfigurationInstance();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if (mFetchShopTask != null) {
-            mFetchShopTask.detach();
-        }
     }
 
     @Override
@@ -214,7 +227,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCategoryProduct() {
-        if (mCategoryProductsUri == null) throw new AssertionError("Category products URI cannot be null");
+        // This can happen if this was the last selected view and the app is restarted from scratch
+        if (mCategoryProductsUri == null) {
+            onCategory();
+            return;
+        }
+
 
         Bundle arguments = new Bundle();
         arguments.putParcelable(ProductFragment.PRODUCT_FRAGMENT_URI, mCategoryProductsUri);
@@ -242,7 +260,7 @@ public class MainActivity extends AppCompatActivity
      * Callback from ShopFragment which is called when action mode is started and stopped.
      * We hide the button fragment in action mode so that the user cannot click the buttons
      * which messes up the action mode.
-     * @param enabled
+     * @param enabled Enable or disable action mode.
      */
     @Override
     public void onShopFragmentActionMode(boolean enabled) {
@@ -261,8 +279,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onShopItemSelected(Uri dateUri) {
+    public void onShopItemSelected(Uri uri) {
+        if (mTwoPaneLayout) {
+            // In two-pane mode show the detail view in this activity by adding
+            // or replacing the detail fragment using a fragment transaction
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(DetailShopFragment.DETAIL_URI, uri);
 
+            DetailShopFragment detailFragment = new DetailShopFragment();
+            detailFragment.setArguments(arguments);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.shop_detail_container, detailFragment, DETAIL_SHOP_FRAGMENT_TAG)
+                    .commit();
+        }
+        else {
+            // Create and start explicit intent
+            Intent intent = new Intent(this, DetailShopActivity.class).setData(uri);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onShopListUpdate() {
+        sGoogleApiClient.reconnect();
     }
 
     /**
@@ -272,8 +312,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        // Connect the client.
-        mGoogleApiClient.connect();
+
+        if (!sFetchShopTaskHasRun || (sFetchShopTask != null && !sFetchShopTask.mTaskFinished)) {
+            sFetchShopTaskHasRun = true;
+
+            // Connect the client.
+            sGoogleApiClient.connect();
+        }
     }
 
     /**
@@ -283,31 +328,49 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         // Disconnecting the client invalidates it.
-        mGoogleApiClient.disconnect();
+        if (sGoogleApiClient != null) {
+            sGoogleApiClient.disconnect();
+        }
+        if (sFetchShopTask != null) {
+            if (sFetchShopTask.getStatus() == AsyncTask.Status.FINISHED) {
+                sFetchShopTask = null;
+            }
+        }
         super.onStop();
     }
 
     /**
      * Callback from Google API Client when we are connected to Google Services
-     * @param bundle
+     * @param bundle Bundle from API
      */
     @Override
     public void onConnected(Bundle bundle) {
         Log.v(LOG_TAG, "DSA LOG - Connected to Google Location Api");
 
         try {
-            android.location.Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            // Check that the task is not already running
+            if (sFetchShopTask != null) {
+                if (sFetchShopTask.getStatus() == AsyncTask.Status.RUNNING) {
+                    return;
+                }
+            }
+
+            android.location.Location location = LocationServices.FusedLocationApi.getLastLocation(sGoogleApiClient);
 
             if (location != null) {
                 String latitude = Double.toString(location.getLatitude());
                 String longtitude = Double.toString(location.getLongitude());
 
-                Log.v(LOG_TAG, "DSA LOG - Latitude: " + latitude + " - Longtitude: " + longtitude);
+                Log.i(LOG_TAG, "DSA LOG - Latitude: " + latitude + " - Longtitude: " + longtitude);
 
-                mFetchShopTask = new FetchShopTask(this, getContentResolver());
+                if (sFetchShopTask == null || sFetchShopTask.getStatus() == AsyncTask.Status.FINISHED) {
+                    sFetchShopTask = new FetchShopTask(this, getContentResolver());
+                }
+
+                Toast.makeText(this, "Fetching stores", Toast.LENGTH_SHORT).show();
 
                 // Execute fetch weather task
-                mFetchShopTask.execute(latitude + "," + longtitude);
+                sFetchShopTask.execute(latitude + "," + longtitude);
             }
         }
         catch (SecurityException ex) {
@@ -321,8 +384,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.i(LOG_TAG, "DSA LOG - GoogleApiClient connection has failed");
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.i(LOG_TAG, "DSA LOG - GoogleApiClient connection has failed " + connectionResult);
     }
 
 }
