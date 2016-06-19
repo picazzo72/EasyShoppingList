@@ -79,8 +79,7 @@ public class ProductFragment extends Fragment
             ShoppingContract.CategoryEntry.COLUMN_NAME
     };
 
-    // These indices are tied to CATEGORY_COLUMNS.  If CATEGORY_COLUMNS changes, these
-    // must change.
+    // These indices are tied to CATEGORY_COLUMNS
     static final int COL_PRODUCT_ID = 0;
     static final int COL_PRODUCT_NAME = 1;
     static final int COL_CATEGORY_NAME = 2;

@@ -229,6 +229,39 @@
             </LinearLayout>
 
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center_vertical"
+            android:paddingTop="@dimen/detail_item_vertical_padding"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin">
+
+            <ImageView
+                android:id="@+id/shop_detail_categories_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_layers_black_24dp"
+                android:contentDescription="@string/shop_detail_phone_number_icon"
+                android:scaleType="center" />
+
+            <Button
+                android:id="@+id/shop_detail_categories_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:text="@string/shop_detail_categories"
+                android:textSize="@dimen/abc_text_size_body_1_material"
+                android:fontFamily="sans-serif"
+                android:layout_marginLeft="@dimen/detail_item_horizonal_padding"
+                android:layout_marginStart="@dimen/detail_item_horizonal_padding"
+                tools:ignore="PrivateResource"/>
+
+        </LinearLayout>
     </LinearLayout>
 
 </ScrollView>

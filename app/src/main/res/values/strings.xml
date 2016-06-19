@@ -1,5 +1,5 @@
 <resources xmlns:xliff="http://schemas.android.com/tools">
-    <string name="app_name">EasyShoppingList</string>
+    <string name="app_name">EasyShopping</string>
 
     // Button names
     <string name="button_current_list">To Buy</string>
@@ -25,6 +25,7 @@
     <string name="title_activity_settings">Settings</string>
     <string name="title_activity_shop_details">Store details</string>
     <string name="title_activity_new_product">Add new product</string>
+    <string name="title_activity_shop_categories">Shop categories</string>
     <string name="list_item_shop_open_now_icon">Open now</string>
     <string name="list_item_shop_shopping_cart_icon">Add to shopping list</string>
     <string name="shop_detail_icon">Store details</string>
@@ -37,6 +38,7 @@
     <string name="shop_detail_phone_number_icon">Phone number</string>
     <string name="shop_detail_phone_number_hint">Phone number</string>
     <string name="shop_detail_opening_hours_icon">Opening hours</string>
+    <string name="shop_detail_categories">Category list</string>
 
     // Dialogs
     <string name="dialog_new_product">Enter new product name</string>

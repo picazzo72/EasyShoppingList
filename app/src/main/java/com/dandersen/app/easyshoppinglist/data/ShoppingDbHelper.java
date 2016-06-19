@@ -16,9 +16,11 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
     private static final String LOG_TAG = ShoppingDbHelper.class.getSimpleName();
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 11;
 
     static final String DATABASE_NAME = "shopping.db";
+
+    private static Context mContext;
 
     public static ShoppingDbHelper getInstance(Context context) {
         // Use the application context, which will ensure that you
@@ -33,6 +35,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
 
     private ShoppingDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        mContext = context;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
         createDatabases(sqLiteDatabase);
 
         // Insert default values
-        Utilities.populateDatabase(sqLiteDatabase);
+        Utilities.populateDatabase(mContext, sqLiteDatabase);
     }
 
     private void createDatabases(SQLiteDatabase sqLiteDatabase) {
@@ -52,10 +55,10 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 ShoppingContract.ShoppingListEntry.COLUMN_DATE + " INTEGER NOT NULL, " +
 
                 // Amount
-                ShoppingContract.ShoppingListEntry.COLUMN_AMOUNT + " REAL, " +
+                ShoppingContract.ShoppingListEntry.COLUMN_AMOUNT + " REAL DEFAULT NULL, " +
 
                 // Note
-                ShoppingContract.ShoppingListEntry.COLUMN_NOTE + " TEXT);";
+                ShoppingContract.ShoppingListEntry.COLUMN_NOTE + " TEXT DEFAULT NULL);";
 
 
         final String SQL_CREATE_CATEGORY_TABLE = "CREATE TABLE " + ShoppingContract.CategoryEntry.TABLE_NAME + " (" +
@@ -65,7 +68,13 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 ShoppingContract.CategoryEntry.COLUMN_NAME + " TEXT NOT NULL, " +
 
                 // Category description
-                ShoppingContract.CategoryEntry.COLUMN_DESCRIPTION + " TEXT, " +
+                ShoppingContract.CategoryEntry.COLUMN_DESCRIPTION + " TEXT DEFAULT NULL, " +
+
+                // Category color
+                ShoppingContract.CategoryEntry.COLUMN_COLOR + " TEXT NOT NULL DEFAULT '255,191,0', " +
+
+                // Category sort order
+                ShoppingContract.CategoryEntry.COLUMN_SORT_ORDER + " INTEGER NOT NULL, " +
 
                 // To assure the application have just one category with a specific name
                 // we create a UNIQUE constraint with REPLACE strategy
@@ -156,6 +165,23 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
                 " UNIQUE (" + ShoppingContract.ShopEntry.COLUMN_PLACE_ID + ") ON CONFLICT REPLACE);";
 
 
+        final String SQL_CREATE_SHOP_CATEGORY_TABLE = "CREATE TABLE " + ShoppingContract.ShopCategoryEntry.TABLE_NAME + " (" +
+                ShoppingContract.ShopCategoryEntry._ID + " INTEGER PRIMARY KEY," +
+
+                // Shop id
+                ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID + " ID NOT NULL, " +
+
+                // Category id
+                ShoppingContract.ShopCategoryEntry.COLUMN_CATEGORY_ID + " ID NOT NULL, " +
+
+                // Category color
+                ShoppingContract.ShopCategoryEntry.COLUMN_SORTORDER + " INTEGER DEFAULT NULL, " +
+
+                // To assure that each shop has a specific category only once,
+                // we create a UNIQUE constraint with REPLACE strategy
+                " UNIQUE (" + ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID + ","
+                + ShoppingContract.ShopCategoryEntry.COLUMN_CATEGORY_ID + ") ON CONFLICT REPLACE);";
+
 
         final String SQL_CREATE_SHOPPING_LIST_PRODUCTS_TABLE = "CREATE TABLE " +
                 ShoppingContract.ShoppingListProductsEntry.TABLE_NAME + " (" +
@@ -189,6 +215,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(SQL_CREATE_CATEGORY_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_PRODUCT_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_SHOP_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_SHOP_CATEGORY_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_SHOPPING_LIST_PRODUCTS_TABLE);
 
         // Create index on place_id in shop table
@@ -211,6 +238,7 @@ public class ShoppingDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.CategoryEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.ProductEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.ShopEntry.TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.ShopCategoryEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.ShoppingListEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ShoppingContract.ShoppingListProductsEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);

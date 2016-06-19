@@ -34,6 +34,7 @@ public class ShoppingProvider extends ContentProvider {
     static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
     static final int SHOP = 400;                    // Shop list
     static final int SHOP_INFO = 401;               // Shop entry info
+    static final int SHOP_CATEGORIES = 402;         // Shop categories
     static final int SHOPPING_LIST_PRODUCTS = 500;  // Shopping list/products/shop rel table
 
     private static final SQLiteQueryBuilder sProductByCategoryQueryBuilder;
@@ -50,6 +51,27 @@ public class ShoppingProvider extends ContentProvider {
                         "." + ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID +
                         " = " + ShoppingContract.CategoryEntry.TABLE_NAME +
                         "." + ShoppingContract.CategoryEntry._ID);
+    }
+
+    private static final SQLiteQueryBuilder sShopCategoriesQueryBuilder;
+
+    static{
+        sShopCategoriesQueryBuilder = new SQLiteQueryBuilder();
+
+        //category INNER JOIN shop_category ON category.id = shop_category.category_id
+        //         INNER JOIN shop ON shop.id = shop_category.shop_id
+        sShopCategoriesQueryBuilder.setTables(
+                ShoppingContract.CategoryEntry.TABLE_NAME + " INNER JOIN " +
+                        ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                        " ON " + ShoppingContract.CategoryEntry.TABLE_NAME +
+                        "." + ShoppingContract.CategoryEntry._ID +
+                        " = " + ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShopCategoryEntry.COLUMN_CATEGORY_ID +
+                        " INNER JOIN " + ShoppingContract.ShopEntry.TABLE_NAME +
+                        " ON " + ShoppingContract.ShopEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShopEntry._ID +
+                        " = " + ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID);
     }
 
     //category.name = ?
@@ -79,6 +101,8 @@ public class ShoppingProvider extends ContentProvider {
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
         matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_INFO);
+
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY, SHOP_CATEGORIES);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCTS, SHOPPING_LIST_PRODUCTS);
 
@@ -125,6 +149,8 @@ public class ShoppingProvider extends ContentProvider {
                 return ShoppingContract.ShopEntry.CONTENT_TYPE;
             case SHOPPING_LIST_PRODUCTS:
                 return ShoppingContract.ShoppingListProductsEntry.CONTENT_TYPE;
+            case SHOP_CATEGORIES:
+                return ShoppingContract.ShopCategoryEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -249,6 +275,23 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getShopCategories(
+            String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        Log.i(LOG_TAG, "DSA LOG - Shop categories list");
+        Log.i(LOG_TAG, "DSA LOG - '" + sShopCategoriesQueryBuilder.getTables() + "' - '" +
+                selection + "' - " + stringArrayToString(selectionArgs));
+
+        return sShopCategoriesQueryBuilder.query(
+                mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getShoppingListProducts(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.i(LOG_TAG, "DSA LOG - Shopping list products rel");
@@ -317,6 +360,11 @@ public class ShoppingProvider extends ContentProvider {
                 retCursor = getShopEntry(uri, projection);
                 break;
             }
+            case SHOP_CATEGORIES:
+            {
+                retCursor = getShopCategories(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
             case SHOPPING_LIST_PRODUCTS:
             {
                 retCursor = getShoppingListProducts(projection, selection, selectionArgs, sortOrder);
@@ -377,6 +425,15 @@ public class ShoppingProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
+            case SHOP_CATEGORIES:
+            {
+                long _id = db.insert(ShoppingContract.ShopCategoryEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = ShoppingContract.ShopCategoryEntry.buildShopCategoryUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
             case SHOPPING_LIST_PRODUCTS:
             {
                 long _id = db.insert(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, null, values);
@@ -387,7 +444,7 @@ public class ShoppingProvider extends ContentProvider {
                 break;
             }
             default:
-                throw new UnsupportedOperationException("Unknown uri: " + uri);
+                throw new UnsupportedOperationException("Unknown uri: " + uri + " Match: " + match);
         }
         if (getContext() != null) {
             getContext().getContentResolver().notifyChange(uri, null);
@@ -424,6 +481,11 @@ public class ShoppingProvider extends ContentProvider {
                 case SHOP:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShopEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
+                }
+                case SHOP_CATEGORIES:
+                {
+                    numberOfDeletedRows = db.delete(ShoppingContract.ShopCategoryEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
                 case SHOPPING_LIST_PRODUCTS:
@@ -485,6 +547,11 @@ public class ShoppingProvider extends ContentProvider {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
+                case SHOP_CATEGORIES:
+                {
+                    numberOfUpdatedRows = db.update(ShoppingContract.ShopCategoryEntry.TABLE_NAME, values, selection, selectionArgs);
+                    break;
+                }
                 case SHOPPING_LIST_PRODUCTS:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, values, selection, selectionArgs);
@@ -514,7 +581,7 @@ public class ShoppingProvider extends ContentProvider {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case SHOP:
+            case SHOP: {
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
@@ -527,12 +594,32 @@ public class ShoppingProvider extends ContentProvider {
                     db.setTransactionSuccessful();
                 } finally {
                     db.endTransaction();
-                    //db.close();
                 }
                 if (getContext() != null) {
                     getContext().getContentResolver().notifyChange(uri, null);
                 }
                 return returnCount;
+            }
+            case SHOP_CATEGORIES:
+            {
+                db.beginTransaction();
+                int returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(ShoppingContract.ShopCategoryEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                if (getContext() != null) {
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
+                return returnCount;
+            }
             default:
                 return super.bulkInsert(uri, values);
         }

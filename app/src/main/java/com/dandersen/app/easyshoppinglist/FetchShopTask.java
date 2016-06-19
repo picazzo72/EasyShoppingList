@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -198,11 +199,11 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
         }
 
         if (!contentValuesArray.isEmpty()) {
-            ContentValues[] contentValuesList = new ContentValues[contentValuesArray.size()];
+            ContentValues[] shopContentValuesList = new ContentValues[contentValuesArray.size()];
             for (int i = 0, end = contentValuesArray.size(); i < end; ++i) {
-                contentValuesList[i] = contentValuesArray.get(i);
+                shopContentValuesList[i] = contentValuesArray.get(i);
             }
-            return contentValuesList;
+            return shopContentValuesList;
         }
 
         mTaskFinished = true;
@@ -236,9 +237,16 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 .setMessage(mActivity.getString(R.string.dialog_import_shops_question, Integer.toString(contentValuesList.length)))
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        mTaskFinished = true;
-                        int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
-                        Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop entries added to database");
+                        synchronized (this) {
+                            mTaskFinished = true;
+
+                            // Insert shops
+                            int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopEntry.CONTENT_URI, fContentValuesList);
+                            Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop entries added to database");
+
+                            // Insert shop categories
+                            insertShopCategories(fContentValuesList);
+                        }
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -249,6 +257,102 @@ public class FetchShopTask extends AsyncTask<String, Void, ContentValues[]> {
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+    }
+
+    /**
+     * Insert shop categories for the newly inserted shops.
+     * All categories are added for each shop with the default sort order.
+     * @param shopContentValuesList Content values for the inserted shops.
+     */
+    private void insertShopCategories(final ContentValues[] shopContentValuesList) {
+        // Get ids of inserted shops
+        HashSet<Integer> shopIds = getShopIds(shopContentValuesList);
+        if (shopIds.isEmpty()) return;
+
+        // Get id and sort order of all categories
+        HashMap<Integer, Integer> categoryList = categories();
+
+        // Prepare content values for shop category entries
+        ContentValues[] shopCategoriesValuesList = new ContentValues[shopIds.size() * categoryList.size()];
+        int shopCategoriesCounter = 0;
+
+        for (Integer shopId : shopIds) {
+            for (HashMap.Entry<Integer, Integer> category : categoryList.entrySet()) {
+                ContentValues shopCategoryValues = new ContentValues();
+                shopCategoryValues.put(ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID, shopId);
+                shopCategoryValues.put(ShoppingContract.ShopCategoryEntry.COLUMN_CATEGORY_ID, category.getKey());
+                shopCategoryValues.put(ShoppingContract.ShopCategoryEntry.COLUMN_SORTORDER, category.getValue());
+                shopCategoriesValuesList[shopCategoriesCounter++] = shopCategoryValues;
+            }
+        }
+
+        int insertCount = mActivity.getContentResolver().bulkInsert(ShoppingContract.ShopCategoryEntry.CONTENT_URI, shopCategoriesValuesList);
+        Log.i(LOG_TAG, "DSA LOG - " + insertCount + " shop category entries added to database");
+    }
+
+    @NonNull
+    private HashSet<Integer> getShopIds(final ContentValues[] shopContentValuesList) {
+        final String OR_SEP = " OR ";
+        final String EQUALS = " = ?";
+
+        ArrayList<String> placeIds = new ArrayList<>();
+        HashSet<Integer> res = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        for (ContentValues contentValues : shopContentValuesList) {
+            String placeId = contentValues.getAsString(ShoppingContract.ShopEntry.COLUMN_PLACE_ID);
+            if (sb.length() != 0) sb.append(OR_SEP);
+            sb.append(ShoppingContract.ShopEntry.COLUMN_PLACE_ID);
+            sb.append(EQUALS);
+            placeIds.add(placeId);
+        }
+
+        Cursor c = null;
+        try {
+            if (mActivity == null) return res;
+            c = mActivity.getContentResolver().query(
+                    ShoppingContract.ShopEntry.CONTENT_URI,
+                    new String[]{ ShoppingContract.ShopEntry._ID },
+                    sb.toString(),                                    // cols for "where" clause
+                    placeIds.toArray(new String[placeIds.size()]),    // values for "where" clause
+                    null                                              // sort order
+            );
+            if (c != null && c.moveToFirst()) {
+                do {
+                    res.add(c.getInt(0));
+                } while (c.moveToNext());
+            }
+        }
+        finally {
+            if (c != null) c.close();
+        }
+
+        return res;
+    }
+
+    @NonNull
+    private HashMap<Integer, Integer> categories() {
+        HashMap<Integer, Integer> res = new HashMap<>();
+        Cursor c = null;
+        try {
+            if (mActivity == null) return res;
+            c = mActivity.getContentResolver().query(
+                    ShoppingContract.CategoryEntry.CONTENT_URI,
+                    new String[]{ ShoppingContract.CategoryEntry._ID ,
+                            ShoppingContract.CategoryEntry.COLUMN_SORT_ORDER },
+                    null, // cols for "where" clause
+                    null, // values for "where" clause
+                    null  // sort order
+            );
+            if (c != null && c.moveToFirst()) {
+                do {
+                    res.put(c.getInt(0), c.getInt(1));
+                } while (c.moveToNext());
+            }
+        }
+        finally {
+            if (c != null) c.close();
+        }
+        return res;
     }
 
     private Uri buildNearbySearchUri(String location, @Nullable String nextPageToken) {

@@ -33,4 +33,32 @@
         <item>45000</item>
         <item>50000</item>
     </string-array>
+
+    <string-array name="categoryColors">
+        <item>255,0,0</item>
+        <item>255,64,0</item>
+        <item>255,128,0</item>
+        <item>255,191,0</item>
+        <item>255,255,0</item>
+        <item>191,255,0</item>
+        <item>128,255,0</item>
+        <item>64,255,0</item>
+        <item>0,255,0</item>
+        <item>0,255,64</item>
+        <item>0,255,128</item>
+        <item>0,255,191</item>
+        <item>0,255,255</item>
+        <item>0,191,255</item>
+        <item>0,128,255</item>
+        <item>0,64,255</item>
+        <item>0,0,255</item>
+        <item>64,0,255</item>
+        <item>128,0,255</item>
+        <item>191,0,255</item>
+        <item>255,0,255</item>
+        <item>255,0,191</item>
+        <item>255,0,128</item>
+        <item>255,0,64</item>
+        <item>255,0,0</item>
+    </string-array>
 </resources>

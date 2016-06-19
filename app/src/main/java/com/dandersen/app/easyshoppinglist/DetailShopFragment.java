@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,12 +17,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.utils.ImplicitIntentUtil;
+import com.dandersen.app.easyshoppinglist.utils.ParcelableString;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;
 
 import java.util.ArrayList;
@@ -37,6 +40,9 @@ public class DetailShopFragment extends Fragment
 
     // Tag for URI sent from caller
     static final String DETAIL_URI = "URI";
+
+    // Tag for Shop id
+    static final String SHOP_ID_TAG = "SHOP_ID";
 
     // URI used by this fragment to retrieve shop details
     private Uri mUri;
@@ -118,6 +124,8 @@ public class DetailShopFragment extends Fragment
         public final ImageView phoneNumberIconView;
         public final ImageView openingHoursIconView;
 
+        public final Button categoryListButton;
+
         private ArrayList<EditText> editTextArrayList = new ArrayList<>();
 
         ViewHolder(View view) {
@@ -134,6 +142,8 @@ public class DetailShopFragment extends Fragment
             websiteIconView         = (ImageView) view.findViewById(R.id.shop_detail_website_icon);
             phoneNumberIconView     = (ImageView) view.findViewById(R.id.shop_detail_phone_number_icon);
             openingHoursIconView    = (ImageView) view.findViewById(R.id.shop_detail_opening_hours_icon);
+
+            categoryListButton      = (Button) view.findViewById(R.id.shop_detail_categories_button);
 
             editTextArrayList.add(titleView);
             editTextArrayList.add(addressView);
@@ -222,7 +232,22 @@ public class DetailShopFragment extends Fragment
         View view = inflater.inflate(R.layout.fragment_shop_detail, container, false);
 
         // Set view holder for easy access to view items
-        view.setTag(new ViewHolder(view));
+        ViewHolder viewHolder = new ViewHolder(view);
+        view.setTag(viewHolder);
+
+        if (mUri != null) {
+            // OnClick listener for category list button
+            viewHolder.categoryListButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Create and start explicit intent
+                    Intent intent = new Intent(getActivity(), ShopCategoriesActivity.class).setData(mUri);
+                    intent.putExtra(DetailShopFragment.SHOP_ID_TAG,
+                            ShoppingContract.ShopEntry.getShopIdFromUri(mUri));
+                    startActivity(intent);
+                }
+            });
+        }
 
         return view;
     }

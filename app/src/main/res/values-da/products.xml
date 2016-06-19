@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="category_names">
+        <item>Bagning</item>
+        <item>Brød/kager</item>
+        <item>Fisk</item>
+        <item>Frost</item>
+        <item>Frugt/grønt</item>
+        <item>Husholdning</item>
+        <item>Kaffe/the</item>
+        <item>Kiosk</item>
+        <item>Kolonial</item>
+        <item>Krydderier</item>
+        <item>Kød</item>
+        <item>Marmelade</item>
+        <item>Mejeri</item>
+        <item>Morgenmad</item>
+        <item>Pålæg</item>
+        <item>Øl/vin/spiritus</item>
+    </string-array>
+
+    <string-array name="dairy_products">
+        <item>A38</item>
+        <item>Bakkedal</item>
+        <item>Brie</item>
+        <item>Creme fraiche</item>
+        <item>Emmentaler, revet</item>
+        <item>Feta</item>
+        <item>Fløde, madlavning</item>
+        <item>Fløde, piske</item>
+        <item>Koldskål</item>
+        <item>Kvark</item>
+        <item>Kærgården</item>
+        <item>Kærnemælk</item>
+        <item>Letmælk</item>
+        <item>Madlavningsfløde</item>
+        <item>Minarine</item>
+        <item>Minimælk</item>
+        <item>Mornay sauce</item>
+        <item>Mozarella, revet</item>
+        <item>Ost, Lagret</item>
+        <item>Ost, Mellemlagret</item>
+        <item>Ost, Mild</item>
+        <item>Parmesan</item>
+        <item>Piskefløde 45%</item>
+        <item>Revet emmentaler</item>
+        <item>Revet mozarella</item>
+        <item>Revet ost</item>
+        <item>Smør</item>
+        <item>Skummetmælk</item>
+        <item>Skyr</item>
+        <item>Smøreost, champignon</item>
+        <item>Smøreost, reje</item>
+        <item>Smøreost, skinke</item>
+        <item>Sødmælk</item>
+        <item>Ymer</item>
+        <item>Yoghurt, banan</item>
+        <item>Yoghurt naturel</item>
+        <item>Yoghurt, peach melba</item>
+        <item>Yoghurt</item>
+        <item>Yoghurt, jordbær</item>
+        <item>Æg</item>
+    </string-array>
+
+    <string-array name="fruit_products">
+        <item>Abrikos</item>
+        <item>Agurk</item>
+        <item>Appelsin</item>
+        <item>Artiskok</item>
+        <item>Asparges</item>
+        <item>Asparges, grøn</item>
+        <item>Asparges, hvid</item>
+        <item>Aspargeskartofler</item>
+        <item>Aubergine</item>
+        <item>Avocado</item>
+        <item>Banan</item>
+        <item>Basilikum, frisk</item>
+        <item>Bladselleri</item>
+        <item>Blåbær</item>
+        <item>Champignon</item>
+        <item>Chili</item>
+        <item>Chili, grøn</item>
+        <item>Chili, rød</item>
+        <item>Citron</item>
+        <item>Citronsaft</item>
+        <item>Dild, frisk</item>
+        <item>Forårsløg</item>
+        <item>Grøn salat</item>
+        <item>Grønkål</item>
+        <item>Grøn peberfrugt</item>
+        <item>Grøn aparges</item>
+        <item>Gulerødder"</item>
+        <item>Gul peberfrugt</item>
+        <item>Hvid asparges</item>
+        <item>Hindbær</item>
+        <item>Honningmelon</item>
+        <item>Hvidløg</item>
+        <item>Icebergsalat</item>
+        <item>Jordbær</item>
+        <item>Kartofler</item>
+        <item>Kartofler, asparges</item>
+        <item>Kartofler, bage</item>
+        <item>Kartofler, nye</item>
+        <item>Kartofler, små</item>
+        <item>Koriander, frisk</item>
+        <item>Kørvel, frisk</item>
+        <item>Lime</item>
+        <item>Løg</item>
+        <item>Løg, skalotte</item>
+        <item>Nye kartofler</item>
+        <item>Oliven, grønne</item>
+        <item>Oliven, sorte</item>
+        <item>Peberfrugt, grøn</item>
+        <item>Peberfrugt, gul</item>
+        <item>Peberfrugt, rød</item>
+        <item>Persille, frisk</item>
+        <item>Pære</item>
+        <item>Rosiner</item>
+        <item>Rødbede</item>
+        <item>Rødkål</item>
+        <item>Rødløg</item>
+        <item>Rød peberfrugt</item>
+        <item>Salathoved</item>
+        <item>Selleri</item>
+        <item>Selleri, blad</item>
+        <item>Selleri, knold</item>
+        <item>Skalotteløg</item>
+        <item>Soltørrede tomater</item>
+        <item>Spidskål</item>
+        <item>Squash</item>
+        <item>Tomater</item>
+        <item>Tomater, soltørrede</item>
+        <item>Vandmelon</item>
+        <item>Vindruer</item>
+        <item>Vindruer, Røde</item>
+        <item>Vindruer, Grønne</item>
+        <item>Æble</item>
+        <item>Ærter</item>
+    </string-array>
+
+    <string-array name="coldcuts_products">
+        <item>Blodpølse</item>
+        <item>Cervelatpølse</item>
+        <item>Dildsild</item>
+        <item>Fiskefilet, stegt</item>
+        <item>Frikadeller</item>
+        <item>Frugtsalat</item>
+        <item>Hamburgerryg</item>
+        <item>Hønsesalat</item>
+        <item>Karrysalat</item>
+        <item>Karrysild</item>
+        <item>Krebsesalat</item>
+        <item>Kryddersild</item>
+        <item>Kyllingeskiver</item>
+        <item>Kylling, stegt</item>
+        <item>Leverpostej</item>
+        <item>Leverpostej, varm</item>
+        <item>Makrelsalat</item>
+        <item>Marinerede sild</item>
+        <item>Medister, røget</item>
+        <item>Oksepastrami</item>
+        <item>Oksespegepølse</item>
+        <item>Rejesalat</item>
+        <item>Roastbeef</item>
+        <item>Rullepølse</item>
+        <item>Russisk salat</item>
+        <item>Røget medister</item>
+        <item>Sild, marinerede</item>
+        <item>Skinke</item>
+        <item>Skinkesalat</item>
+        <item>Sky</item>
+        <item>Sommersalat</item>
+        <item>Spegepølse</item>
+        <item>Stegt fiskefilet</item>
+        <item>Stegt kylling</item>
+        <item>Torskelever</item>
+        <item>Tun</item>
+        <item>Tunsalat</item>
+        <item>Varm leverpostej</item>
+    </string-array>
+
+    <string-array name="meat_products">
+        <item>And</item>
+        <item>And 3200 gr.</item>
+        <item>And 3600 gr.</item>
+        <item>And 3800 gr.</item>
+        <item>And, Dansk</item>
+        <item>Berberiand</item>
+        <item>Bacon</item>
+        <item>Brunchpølser</item>
+        <item>Chilipølse</item>
+        <item>Entrecote</item>
+        <item>Filet mignon</item>
+        <item>Flæskesteg</item>
+        <item>Frankfurter</item>
+        <item>Grillpølser</item>
+        <item>Gullashkød</item>
+        <item>Gås</item>
+        <item>Hjerte, svine</item>
+        <item>Hk. kylling</item>
+        <item>Hk. oksekød</item>
+        <item>Hk. svinekød</item>
+        <item>Kalvelever</item>
+        <item>Kamsteg</item>
+        <item>Kylling</item>
+        <item>Kylling 1200 gr.</item>
+        <item>Kylling 1400 gr.</item>
+        <item>Kylling 1800 gr.</item>
+        <item>Kylling, hk.</item>
+        <item>Lammekotelet</item>
+        <item>Lammekølle</item>
+        <item>Lever</item>
+        <item>Lever, kalve</item>
+        <item>Lever, svine</item>
+        <item>Medisterpølse</item>
+        <item>Mørbrad, okse</item>
+        <item>Mørbrad, svine</item>
+        <item>Nakkefilet</item>
+        <item>Nakkekotelet</item>
+        <item>Nakkesteg</item>
+        <item>Oksefilet</item>
+        <item>Oksemørbrad</item>
+        <item>Ostepølser</item>
+        <item>Plankebøf</item>
+        <item>Pulled pork</item>
+        <item>Pølser</item>
+        <item>Pølser, chili</item>
+        <item>Pølser, grill</item>
+        <item>Pølser, oste</item>
+        <item>Pølser, røde</item>
+        <item>Ribbensteg</item>
+        <item>Roastbeef</item>
+        <item>Skaftkotelet</item>
+        <item>Svinebryst</item>
+        <item>Svinelever</item>
+        <item>Oksebov</item>
+        <item>Oksekød, hk.</item>
+        <item>Osso buco</item>
+        <item>Røde pølser</item>
+        <item>Skinkeschnitzel</item>
+        <item>Spareribs</item>
+        <item>Svinehjerte</item>
+        <item>Svinekotelet</item>
+        <item>Svinekød, hk.</item>
+        <item>Svinekød i tern</item>
+        <item>Svinemørbrad</item>
+        <item>Tournedous</item>
+        <item>Tykstegsbøf</item>
+        <item>Wienerschnitzel</item>
+    </string-array>
+
+    <string-array name="fish_products">
+        <item>Gravad laks</item>
+        <item>Hornfisk</item>
+        <item>Laks</item>
+        <item>Laksefilet</item>
+        <item>Laks, gravad</item>
+        <item>Makrel</item>
+        <item>Makrel, røget</item>
+        <item>Rejer</item>
+        <item>Røget makret</item>
+        <item>Rødspætte</item>
+        <item>Rødspættefilet</item>
+        <item>Sej</item>
+        <item>Sejfilet</item>
+        <item>Skrubbe</item>
+        <item>Torsk</item>
+        <item>Torskefilet</item>
+    </string-array>
+    
+    <string-array name="frozen_products">
+        <item>Bønner</item>
+        <item>Fine ærter</item>
+        <item>Karotter</item>
+        <item>Suppeurter</item>
+        <item>Ærter</item>
+        <item>Ærter, fine</item>
+    </string-array>
+
+    <string-array name="coffee_products">
+        <item>Kaffe</item>
+        <item>Kaffebønner</item>
+        <item>Karat kaffe</item>
+        <item>Karat instant</item>
+        <item>Kamillete</item>
+        <item>The</item>
+    </string-array>
+
+    <string-array name="spice_products">
+        <item>After eight krymmel</item>
+        <item>All round krydderi</item>
+        <item>Asiatisk krydderi</item>
+        <item>Bacon krydderi</item>
+        <item>Bali wok krydderi</item>
+        <item>Barbeque krydderi</item>
+        <item>Basilikum</item>
+        <item>Brun sennep</item>
+        <item>Cayennepeber</item>
+        <item>Chili</item>
+        <item>Chili, knust</item>
+        <item>Chili, stødt</item>
+        <item>Chili, sød</item>
+        <item>Chokolade krymmel</item>
+        <item>Citronmelisse</item>
+        <item>Citronpeber</item>
+        <item>Chokolade krymmel</item>
+        <item>De 5 peber</item>
+        <item>Det 3. krydderi</item>
+        <item>Dild</item>
+        <item>Edelsüsspaprika</item>
+        <item>Enebær, hel</item>
+        <item>Enebær, stødt</item>
+        <item>Estragon</item>
+        <item>Fennikel, stødt</item>
+        <item>Fiskesennep</item>
+        <item>Fransk middelhavssalt</item>
+        <item>Gløgg mix</item>
+        <item>Grill krydderi</item>
+        <item>Grill krydderi, mexicansk</item>
+        <item>Groft krydderi</item>
+        <item>Gurkemeje</item>
+        <item>Græskarkerner</item>
+        <item>Herbes de Provence</item>
+        <item>Hvid peber, hel</item>
+        <item>Hvid peber, stødt</item>
+        <item>Hvidløgspulver</item>
+        <item>Hvidløgssalt</item>
+        <item>Ingefær, hel</item>
+        <item>Ingefær, stødt</item>
+        <item>Italiensk krydderi</item>
+        <item>Jordbær krymmel</item>
+        <item>Kanel</item>
+        <item>Kanelstang</item>
+        <item>Karamel krymmel</item>
+        <item>Kardemommekapsel</item>
+        <item>Karry</item>
+        <item>Karry, mild</item>
+        <item>Karry, hot</item>
+        <item>Karry, madras</item>
+        <item>Kommen</item>
+        <item>Koriander</item>
+        <item>Korianderfrø, hel</item>
+        <item>Krymmel</item>
+        <item>Krymmel, after eight</item>
+        <item>Krymmel, multifarvet</item>
+        <item>Krymmel, chokolade</item>
+        <item>Krymmel, jordbær</item>
+        <item>Krymmel, karamel</item>
+        <item>Krymmel, lakrids</item>
+        <item>Krymmel, mint</item>
+        <item>Kørvel</item>
+        <item>Lakrids krymmel</item>
+        <item>Lakridsrod</item>
+        <item>Laurbærblade</item>
+        <item>Løgpulver</item>
+        <item>Madagaskarpeber</item>
+        <item>Merian</item>
+        <item>Mexicansk grill krydderi</item>
+        <item>Middelhavssalt, fransk</item>
+        <item>Mint krymmel</item>
+        <item>Multifarvet krymmel</item>
+        <item>Muskatnød</item>
+        <item>Muskatnød, stødt</item>
+        <item>Mynte</item>
+        <item>Nelliker</item>
+        <item>Oregano</item>
+        <item>Oste krydderi</item>
+        <item>Paprika</item>
+        <item>Paprika, edelsüss</item>
+        <item>Paprika, rosen</item>
+        <item>Paprika, stærk</item>
+        <item>Peber</item>
+        <item>Peber hel, hvid</item>
+        <item>Peber stødt, hvid</item>
+        <item>Peber hel, sort</item>
+        <item>Peber stødt, sort</item>
+        <item>Persille</item>
+        <item>Pizza krydderi</item>
+        <item>Purløg</item>
+        <item>Rosmarin</item>
+        <item>Safran</item>
+        <item>Salt</item>
+        <item>Salt, fint</item>
+        <item>Salt, groft</item>
+        <item>Salvie</item>
+        <item>Sennep, brun</item>
+        <item>Sennepsfrø</item>
+        <item>Sennepsfrø, sorte</item>
+        <item>Sennepspulver</item>
+        <item>Sesamfrø</item>
+        <item>Shawarma krydderi</item>
+        <item>Soltørrede tomater</item>
+        <item>Sort peber, hel</item>
+        <item>Sort peber, stødt</item>
+        <item>Spidskommen, hel</item>
+        <item>Spidskommen, stødt</item>
+        <item>Steak krydderi</item>
+        <item>Tandoori Masala</item>
+        <item>Timian</item>
+        <item>Tomater, soltørrede</item>
+        <item>Vanille</item>
+        <item>Vanillestang</item>
+    </string-array>
+
+    <string-array name="cereal_products">
+        <item>All-bran</item>
+        <item>Chokolademüsli</item>
+        <item>Choko pops</item>
+        <item>Corn flakes</item>
+        <item>Guldkorn</item>
+        <item>Guldmüsli</item>
+        <item>Havregryn</item>
+        <item>Müsli, øko</item>
+        <item>Øko. müsli</item>
+    </string-array>
+
+    <string-array name="bread_products">
+        <item>Citronmåne</item>
+        <item>Cookies</item>
+        <item>Flutes</item>
+        <item>Flutes, grov</item>
+        <item>Franskbrød</item>
+        <item>Gulerodskage</item>
+        <item>Hindbærroulade</item>
+        <item>Kammerjunkere</item>
+        <item>Kernerugbrød</item>
+        <item>Knækbrød</item>
+        <item>Marcipanroulade</item>
+        <item>Rasp</item>
+        <item>Rasp, æblekage</item>
+        <item>Riskiks</item>
+        <item>Riskiks med mørk chokolade</item>
+        <item>Riskiks med mælkechokolade</item>
+        <item>Roulade, hindbær</item>
+        <item>Roulade, marcipan</item>
+        <item>Rugbrød</item>
+        <item>Rugbrød, kerne</item>
+        <item>Rugbrød, softkerne</item>
+        <item>Softkerne rugbrød</item>
+        <item>Sødmælksfranskbrød</item>
+        <item>Æblekagerasp</item>
+    </string-array>
+
+    <string-array name="beer_products">
+        <item>7up</item>
+        <item>Appelsinsodavand</item>
+        <item>Carlsberg</item>
+        <item>Citronvand</item>
+        <item>Coca/cola</item>
+        <item>Faxe kondi</item>
+        <item>Grape sodavand</item>
+        <item>Harboe cola</item>
+        <item>Rød sodavand</item>
+        <item>Sodavand, appelsin</item>
+        <item>Sodavand, citron</item>
+        <item>Sodavand, grape</item>
+        <item>Sodavand, rød</item>
+        <item>Sodavand, sport</item>
+        <item>Sprite</item>
+        <item>Tuborg</item>
+        <item>Tuborg Classic</item>
+    </string-array>
+
+    <string-array name="jam_products">
+        <item>Appelsinmarmelade</item>
+        <item>Jordbærmarmelade</item>
+        <item>Solbærmarmelade</item>
+    </string-array>
+    
+    <string-array name="kiosk_products">
+        <item>Hjemmet</item>
+        <item>Se og hør</item>
+        <item>Kryds og tværs</item>
+        <item>Cigaretter</item>
+        <item>Ude og hjemme</item>
+    </string-array>
+    
+    <string-array name="baking_products">
+        <item>Bagepulver</item>
+        <item>Brun farin</item>
+        <item>Flormelis</item>
+        <item>Gær</item>
+        <item>Mel</item>
+        <item>Natron</item>
+        <item>Speltmel</item>
+        <item>Speltmel, fint</item>
+        <item>Speltmel, groft</item>
+        <item>Vaniliesukker</item>
+    </string-array>
+    
+    <string-array name="colonial_products">
+        <item>Ansjosfilet</item>
+        <item>Asier, syltede</item>
+        <item>Basmati ris</item>
+        <item>Bouillon, fiske</item>
+        <item>Bouillon, grøntsag</item>
+        <item>Bouillon, okse</item>
+        <item>Dijonsennep</item>
+        <item>Dildeddike</item>
+        <item>Eddike</item>
+        <item>Eddike, dild</item>
+        <item>Eddike, estragon</item>
+        <item>Eddike, vin</item>
+        <item>Ekstra jomfruolivenolie</item>
+        <item>Estragoneddike</item>
+        <item>Fiskebouillon</item>
+        <item>Flåede tomater</item>
+        <item>Grønne oliven u. sten</item>
+        <item>Grøntsagsbouillon</item>
+        <item>Hk. tomater</item>
+        <item>Jasminris</item>
+        <item>Jomfruolivenolie, ekstra</item>
+        <item>Kapers</item>
+        <item>Løse ris</item>
+        <item>Oksebouillon</item>
+        <item>Oliven, grønne</item>
+        <item>Oliven, sorte</item>
+        <item>Oliven u. sten, sorte</item>
+        <item>Oliven med mandel, grønne</item>
+        <item>Oliven med mandel, sorte</item>
+        <item>Olivenolie</item>
+        <item>Pastaskruer</item>
+        <item>Pesto</item>
+        <item>Pesto, grøn</item>
+        <item>Pesto, rød</item>
+        <item>Pinjekerner</item>
+        <item>Ris</item>
+        <item>Ris, basmati</item>
+        <item>Ris, brune</item>
+        <item>Ris, jasmin</item>
+        <item>Ris, løse</item>
+        <item>Rødbeder, syltede</item>
+        <item>Rødkål</item>
+        <item>Rørsukker</item>
+        <item>Sennep</item>
+        <item>Sennep, dijon</item>
+        <item>Sennep, stærk</item>
+        <item>Sennep, sød</item>
+        <item>Sukker</item>
+        <item>Sukker, rør</item>
+        <item>Sorte oliven u. sten</item>
+        <item>Stærk sennep</item>
+        <item>Syltede asier</item>
+        <item>Syltede rødbeder</item>
+        <item>Sød sennep</item>
+        <item>Tabasco</item>
+        <item>Tomater, flåede</item>
+        <item>Tomater, hk.</item>
+        <item>Valnøddekerner</item>
+        <item>Vineddike</item>
+    </string-array>
+
+    <string-array name="household_products">
+        <item>Bagepapir</item>
+        <item>Bagepapir, ark</item>
+        <item>Bagepapir, rulle</item>
+        <item>Køkkenrulle</item>
+        <item>Opvaskebørste</item>
+        <item>Opvaskemiddel</item>
+        <item>Opvasketabs</item>
+        <item>Staniol</item>
+        <item>Toiletpapir</item>
+    </string-array>
+</resources>

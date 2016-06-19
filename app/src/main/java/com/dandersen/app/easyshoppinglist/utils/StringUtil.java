@@ -7,6 +7,7 @@ import com.dandersen.app.easyshoppinglist.R;
 
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
+import java.util.Random;
 
 /**
  * Created by Dan on 09-06-2016.
@@ -15,6 +16,22 @@ import java.util.Calendar;
  * - Opening hours
  */
 public class StringUtil {
+
+    private static Random random;
+
+    public static void shuffle(String[] array) {
+        if (random == null) random = new Random();
+        int count = array.length;
+        for (int i = count; i > 1; i--) {
+            swap(array, i - 1, random.nextInt(i));
+        }
+    }
+
+    private static void swap(String[] array, int i, int j) {
+        String temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
 
     public static class FormattedAddress {
 

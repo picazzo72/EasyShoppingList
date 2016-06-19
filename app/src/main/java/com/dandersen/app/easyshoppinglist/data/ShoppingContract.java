@@ -31,6 +31,7 @@ public class ShoppingContract {
     public static final String PATH_PRODUCT = "product";
     public static final String PATH_PRODUCT_WITH_CATEGORY = "product_with_category";
     public static final String PATH_SHOP = "shop";
+    public static final String PATH_SHOP_CATEGORY = "shop_category";
     public static final String PATH_SHOPPING_LIST_PRODUCTS = "shoppinglistproducts";
 
     // To make it easy to query for the exact date, we normalize all dates that go into
@@ -93,6 +94,12 @@ public class ShoppingContract {
 
         // Description
         public static final String COLUMN_DESCRIPTION = "category_description";
+
+        // Color
+        public static final String COLUMN_COLOR = "category_color";
+
+        // Sort order
+        public static final String COLUMN_SORT_ORDER = "category_sort_order";
 
         public static Uri buildCategoryUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -209,6 +216,33 @@ public class ShoppingContract {
 
         public static String getShopIdFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
+        }
+    }
+
+    public static final class ShopCategoryEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_SHOP_CATEGORY).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_SHOP_CATEGORY;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_SHOP_CATEGORY;
+
+        // Table name
+        public static final String TABLE_NAME = PATH_SHOP_CATEGORY;
+
+        // Shop id
+        public static final String COLUMN_SHOP_ID = "shop_id";
+
+        // Category id
+        public static final String COLUMN_CATEGORY_ID = "category_id";
+
+        // Sort order
+        public static final String COLUMN_SORTORDER = "shop_category_sort_order";
+
+        public static Uri buildShopCategoryUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
 

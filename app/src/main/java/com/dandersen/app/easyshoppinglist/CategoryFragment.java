@@ -25,6 +25,8 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 public class CategoryFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private final String LOG_TAG = CategoryFragment.class.getSimpleName();
+
     private CategoryAdapter mCategoryAdapter;
 
     private boolean mTwoPaneLayout = false;
@@ -37,8 +39,6 @@ public class CategoryFragment extends Fragment
 
     // Tag for save instance bundle
     private static final String SELECTED_KEY = "selected_position";
-
-    private final String LOG_TAG = CategoryFragment.class.getSimpleName();
 
     private static final int CURSOR_LOADER_ID = 0;
 

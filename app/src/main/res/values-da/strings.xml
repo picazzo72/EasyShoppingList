@@ -1,0 +1,66 @@
+<resources xmlns:xliff="http://schemas.android.com/tools">
+    <string name="app_name">EasyShopping</string>
+
+    // Button names
+    <string name="button_current_list">Køb</string>
+    <string name="button_shopping_lists">Indkøbslister</string>
+    <string name="button_categories">Kategorier</string>
+    <string name="button_products">Produkter</string>
+    <string name="button_shop">Butikker</string>
+
+    // Action menus
+    <string name="action_settings">Indstillinger</string>
+    <string name="action_new">Ny</string>
+    <string name="action_delete">Slet</string>
+    <string name="action_select_all">Vælg alle</string>
+    <string name="action_edit">Redigér</string>
+    <string name="action_refresh">Opdatér</string>
+    <string name="action_reload">Genindlæs</string>
+
+    // Setting keys
+    <string name="pref_key_reset_product_database" translatable="false">prefKeyResetDatabase</string>
+    <string name="pref_key_nearby_radius" translatable="false">prefKeySelectNearbyRadius</string>
+
+    // Activities
+    <string name="title_activity_settings">Indstillinger</string>
+    <string name="title_activity_shop_details">Butik info</string>
+    <string name="title_activity_new_product">Tilføj nyt produkt</string>
+    <string name="title_activity_shop_categories">Butik kategorier</string>
+    <string name="list_item_shop_open_now_icon">Åben nu</string>
+    <string name="list_item_shop_shopping_cart_icon">Tilføj til indkøbsliste</string>
+    <string name="shop_detail_icon">Butik info</string>
+    <string name="shop_detail_name_hint">Butik navn</string>
+    <string name="shop_detail_address_icon">Adresse</string>
+    <string name="shop_detail_address_text">Adresse</string>
+    <string name="shop_detail_country_text">Land</string>
+    <string name="shop_detail_website_icon">Hjemmeside</string>
+    <string name="shop_detail_website_hint">Hjemmeside</string>
+    <string name="shop_detail_phone_number_icon">Telefonnummer</string>
+    <string name="shop_detail_phone_number_hint">Telefonnummer</string>
+    <string name="shop_detail_opening_hours_icon">Åbningstider</string>
+    <string name="shop_detail_categories">Kategoriliste</string>
+
+    // Dialogs
+    <string name="dialog_new_product">Indtast nyt produktnavn</string>
+    <string name="dialog_create">Opret</string>
+    <string name="dialog_cancel">Annullér</string>
+    
+    <string name="dialog_import_shops_title">Opret butikker</string>
+    <string name="dialog_import_shops_question"><xliff:g id="number_of_shops">%1$s</xliff:g> nye butikker funder. Skal disse oprettes?</string>
+
+    <string name="dialog_delete_shops_title">Slet butikker?</string>
+    <string name="dialog_delete_shops_question">Er du sikker på at du vil slette <xliff:g id="number_of_shops">%1$s</xliff:g> butik(ker)?</string>
+
+    // Implicit intent error message
+    <string name="error_msg_no_map">Der er ingen kort service tilgængelig</string>
+    <string name="error_msg_no_browser">Der er ingen browser service tilgængelig</string>
+    <string name="error_msg_no_phone">Der er ingen telefon service tilgængelig</string>
+
+    // Opening hours
+    <string name="opening_hours_open_until">åben til</string>
+
+    // Toasts
+    <string name="toast_fetching_stores">Henter butikker</string>
+    <string name="toast_updating_stores">Opdaterer butikker</string>
+
+</resources>
