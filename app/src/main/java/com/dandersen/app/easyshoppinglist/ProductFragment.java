@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,13 +23,17 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeListView;
+
+import java.util.ArrayList;
 
 /**
  * Created by Dan on 28-05-2016.
  * Product fragment for displaying the product list.
  */
 public class ProductFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor>,
+                   ActionModeListView.CallBack {
 
     private final String LOG_TAG = ProductFragment.class.getSimpleName();
 
@@ -173,7 +179,41 @@ public class ProductFragment extends Fragment
         // Prepare the loader.  Either re-connect with an existing one, or start a new one.
         getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
 
+        // Setup item long click for item deletion
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        ActionModeListView.setupItemLongClickClistener(this, activity, mListView, mProductAdapter);
+
         return rootView;
+    }
+
+    @Override
+    public void onActionModeFinished(final ArrayList<Integer> itemsToDelete) {
+        final ProductFragment fProductFragment = this;
+
+        new AlertDialog.Builder(getActivity())
+                .setCancelable(true)
+                .setTitle(R.string.dialog_delete_products_title)
+                .setMessage((itemsToDelete.size() == 1) ?
+                        getActivity().getString(R.string.dialog_delete_products_question_one,
+                                Integer.toString(itemsToDelete.size())) :
+                        getActivity().getString(R.string.dialog_delete_products_question,
+                                Integer.toString(itemsToDelete.size()))
+                )
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mProductAdapter.deleteEntries(itemsToDelete, COL_PRODUCT_ID);
+
+                        // Re-initalize loader after data was removed
+                        getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, fProductFragment).forceLoad();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     @Override
@@ -302,5 +342,4 @@ public class ProductFragment extends Fragment
         }
         super.onSaveInstanceState(savedInstanceState);
     }
-
 }

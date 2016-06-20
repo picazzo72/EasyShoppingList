@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,13 +17,17 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeListView;
+
+import java.util.ArrayList;
 
 /**
  * Created by Dan on 15-06-2016.
  * Fragment for shop categories activity. Used to setup categories for a shop.
  */
 public class ShopCategoriesFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor>,
+                   ActionModeListView.CallBack {
 
     private final String LOG_TAG = ShopCategoriesFragment.class.getSimpleName();
 
@@ -113,7 +120,41 @@ public class ShopCategoriesFragment extends Fragment
         // Prepare the loader.  Either re-connect with an existing one, or start a new one.
         getLoaderManager().initLoader(CURSOR_CATEGORY_LOADER_ID, null, this);
 
+        // Setup item long click for item deletion
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        ActionModeListView.setupItemLongClickClistener(this, activity, mListView, mShopCategoryAdapter);
+
         return rootView;
+    }
+
+    @Override
+    public void onActionModeFinished(final ArrayList<Integer> itemsToDelete) {
+        final ShopCategoriesFragment fShopCategoriesFragment = this;
+
+        new AlertDialog.Builder(getActivity())
+                .setCancelable(true)
+                .setTitle(R.string.dialog_delete_shop_categories_title)
+                .setMessage((itemsToDelete.size() == 1) ?
+                        getActivity().getString(R.string.dialog_delete_shop_categories_question_one,
+                                Integer.toString(itemsToDelete.size())) :
+                        getActivity().getString(R.string.dialog_delete_shop_categories_question,
+                                Integer.toString(itemsToDelete.size()))
+                        )
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mShopCategoryAdapter.deleteEntries(itemsToDelete, COL_SHOP_CATEGORY_ID);
+
+                        // Re-initalize loader after data was removed
+                        getLoaderManager().restartLoader(CURSOR_CATEGORY_LOADER_ID, null, fShopCategoriesFragment).forceLoad();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
 }

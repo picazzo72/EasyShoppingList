@@ -3,23 +3,25 @@ package com.dandersen.app.easyshoppinglist;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 
 /**
  * Created by Dan on 16-06-2016.
  * {@link ShopCategoriesAdapter} exposes a list of shop categories
  * from a {@link android.database.Cursor} to a {@link android.widget.ListView}.
  */
-public class ShopCategoriesAdapter extends CursorAdapter {
+public class ShopCategoriesAdapter extends ActionModeCursorAdapter {
 
     private static boolean mTwoPaneLayout = true;
 
     public ShopCategoriesAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags);
+        super(context, c, flags, R.id.list_item_category_reorder, R.drawable.ic_reorder_black_24dp);
     }
 
     public void setTwoPaneLayout(boolean twoPaneLayout) {
@@ -60,8 +62,7 @@ public class ShopCategoriesAdapter extends CursorAdapter {
      */
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        // our view is pretty simple here --- just a text view
-        // we'll keep the UI functional with a simple (and slow!) binding.
+        super.bindView(view, context, cursor);
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
@@ -76,7 +77,16 @@ public class ShopCategoriesAdapter extends CursorAdapter {
             int r = Integer.valueOf(colorItems[0]);
             int g = Integer.valueOf(colorItems[1]);
             int b = Integer.valueOf(colorItems[2]);
-            view.setBackgroundColor(Color.argb(255, r, g, b));
+            view.setBackgroundColor(Color.argb(100, r, g, b));
         }
+    }
+
+    @Override
+    protected void onDeleteEntries(StringBuilder idSelection, String[] idSelectionArgs) {
+        mContext.getContentResolver().delete(
+                ShoppingContract.ShopCategoryEntry.CONTENT_URI,
+                ShoppingContract.ShopCategoryEntry._ID + " IN ( " + idSelection.toString() + " )",
+                idSelectionArgs
+        );
     }
 }

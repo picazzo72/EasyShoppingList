@@ -8,9 +8,21 @@
 
     <TextView
         android:id="@+id/list_item_category_name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="@dimen/abc_text_size_large_material"
         android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:paddingRight="@dimen/detail_item_horizonal_padding"
+        android:paddingEnd="@dimen/detail_item_horizonal_padding"
         tools:ignore="PrivateResource"/>
+
+    <ImageView
+        android:id="@+id/list_item_category_reorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_reorder_black_24dp"
+        android:contentDescription="@string/list_item_shop_category_reorder_icon"
+        android:scaleType="center"
+        android:gravity="end|center_vertical"/>
 </LinearLayout>

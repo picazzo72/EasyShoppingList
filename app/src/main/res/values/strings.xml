@@ -28,6 +28,8 @@
     <string name="title_activity_shop_categories">Shop categories</string>
     <string name="list_item_shop_open_now_icon">Open now</string>
     <string name="list_item_shop_shopping_cart_icon">Add to shopping list</string>
+    <string name="list_item_shop_category_reorder_icon">Reorder categories</string>
+    <string name="list_item_product_shopping_cart_icon">Add to shopping list</string>
     <string name="shop_detail_icon">Store details</string>
     <string name="shop_detail_name_hint">Store name</string>
     <string name="shop_detail_address_icon">Address</string>
@@ -48,8 +50,17 @@
     <string name="dialog_import_shops_title">Create store entries</string>
     <string name="dialog_import_shops_question"><xliff:g id="number_of_shops">%1$s</xliff:g> new stores found. Should these be created?</string>
 
-    <string name="dialog_delete_shops_title">Delete store entries</string>
+    <string name="dialog_delete_shops_title">Delete stores</string>
     <string name="dialog_delete_shops_question">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store(s)?</string>
+    <string name="dialog_delete_shops_question_one">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store?</string>
+
+    <string name="dialog_delete_shop_categories_title">Delete store categories</string>
+    <string name="dialog_delete_shop_categories_question">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> categories?</string>
+    <string name="dialog_delete_shop_categories_question_one">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> category?</string>
+
+    <string name="dialog_delete_products_title">Delete products</string>
+    <string name="dialog_delete_products_question">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> products?</string>
+    <string name="dialog_delete_products_question_one">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> product?</string>
 
     // Implicit intent error message
     <string name="error_msg_no_map">There is no map service available</string>

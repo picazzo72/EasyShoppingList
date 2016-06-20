@@ -89,6 +89,13 @@ public class MainActivity extends AppCompatActivity
         sFetchShopTaskTimer.schedule(sFetchShopTimerTask, FETCH_SHOP_TIMER_INTERVAL, FETCH_SHOP_TIMER_INTERVAL);
     }
 
+    private void deleteFetchShopTimer() {
+        if (sFetchShopTimerTask != null) {
+            sFetchShopTimerTask.cancel();
+            sFetchShopTimerTask = null;
+        }
+    }
+
     /**
      * Used to save the AsyncTask when this Activity is begin destroyed to give
      * to the new MainActivity. This handles eg. screen rotation.
@@ -317,18 +324,24 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         Log.i(LOG_TAG, "DSA LOG - onStop");
+
         // Disconnecting the client invalidates it.
         if (mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
             mGoogleApiClient = null;
             Log.i(LOG_TAG, "DSA LOG - onStop - GoogleApiClient disconnected");
         }
-        if (sFetchShopTask != null) {
-            if (sFetchShopTask.getStatus() == AsyncTask.Status.RUNNING) {
-                Log.i(LOG_TAG, "DSA LOG - onStop - FetchShopTask cancelled");
-                sFetchShopTask.cancel(true /*mayInterruptIfRunning*/);
-            }
-        }
+
+//        if (sFetchShopTask != null) {
+//            if (sFetchShopTask.getStatus() == AsyncTask.Status.RUNNING) {
+//                Log.i(LOG_TAG, "DSA LOG - onStop - FetchShopTask cancelled");
+//                sFetchShopTask.cancel(true /*mayInterruptIfRunning*/);
+//            }
+//        }
+
+        // Stop the timer
+        deleteFetchShopTimer();
+
         super.onStop();
     }
 

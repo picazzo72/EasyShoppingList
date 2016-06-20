@@ -1,28 +1,27 @@
 package com.dandersen.app.easyshoppinglist;
 
-/**
- * Created by Dan on 28-05-2016.
- */
-
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 import android.widget.TextView;
 
+import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
+
 /**
+ * Created by Dan on 28-05-2016.
  * {@link ProductAdapter} exposes a list of products
  * from a {@link android.database.Cursor} to a {@link android.widget.ListView}.
  */
-public class ProductAdapter extends CursorAdapter {
+public class ProductAdapter extends ActionModeCursorAdapter {
 
     private static boolean mTwoPaneLayout = true;
 
     public ProductAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags);
+        super(context, c, flags, R.id.list_item_product_shopping_cart,
+                R.drawable.ic_shopping_cart_black_24dp);
     }
 
     public void setTwoPaneLayout(boolean twoPaneLayout) {
@@ -68,8 +67,7 @@ public class ProductAdapter extends CursorAdapter {
      */
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        // our view is pretty simple here --- just a text view
-        // we'll keep the UI functional with a simple (and slow!) binding.
+        super.bindView(view, context, cursor);
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
@@ -91,5 +89,14 @@ public class ProductAdapter extends CursorAdapter {
             if (this.getItemId(position) == id)
                 return position;
         return -1;
+    }
+
+    @Override
+    protected void onDeleteEntries(StringBuilder idSelection, String[] idSelectionArgs) {
+        mContext.getContentResolver().delete(
+                ShoppingContract.ProductEntry.CONTENT_URI,
+                ShoppingContract.ProductEntry._ID + " IN ( " + idSelection.toString() + " )",
+                idSelectionArgs
+        );
     }
 }

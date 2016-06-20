@@ -3,7 +3,6 @@ package com.dandersen.app.easyshoppinglist;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,22 +12,19 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseBooleanArray;
-import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.prefs.Settings;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeListView;
 
 import java.util.ArrayList;
 
@@ -37,7 +33,8 @@ import java.util.ArrayList;
  * Shop fragment
  */
 public class ShopFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor>,
+                   ActionModeListView.CallBack {
 
     private final String LOG_TAG = ShopFragment.class.getSimpleName();
 
@@ -138,7 +135,9 @@ public class ShopFragment extends Fragment
         mListView = (ListView) rootView.findViewById(R.id.listview_shops);
         mListView.setAdapter(mShopAdapter);
 
-        setupItemLongClickClistener(mListView);
+        // Setup item long click for item deletion
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        ActionModeListView.setupItemLongClickClistener(this, activity, mListView, mShopAdapter);
 
         // Create on item click listener for the ListView
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -176,140 +175,22 @@ public class ShopFragment extends Fragment
         return rootView;
     }
 
-    /**
-     * Long click is used to activate contextual actions
-     * The procedure comes from:
-     * https://techienotes.info/2015/09/13/how-to-select-multiple-items-in-android-listview/
-     * @param listView The list view in question
-     */
-    private void setupItemLongClickClistener(ListView listView) {
-        final ListView fListView = listView;
-
-        fListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long rowId) {
-                fListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-
-                // We set the item to be checked to activate the action mode immediately
-                fListView.setItemChecked(index, true);
-
-                return true;
-            }
-
-        });
-
-        // Capture ListView item click
-        fListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
-
-            @Override
-            public void onItemCheckedStateChanged(ActionMode mode,
-                                                  int position, long id, boolean checked) {
-                // Prints the count of selected Items in title
-                mode.setTitle(fListView.getCheckedItemCount() + " selected");
-
-                // Toggle the state of item after every click on it
-                mShopAdapter.toggleSelection(position, checked);
-            }
-
-            /**
-             * Called to report a user click on an action button.
-             * @return true if this callback handled the event,
-             *         false if the standard MenuItem invocation should continue.
-             */
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                if (item.getItemId() == R.id.action_delete){
-                    SparseBooleanArray selected = mShopAdapter.getSelectedIds();
-                    short size = (short)selected.size();
-                    ArrayList<Integer> itemsToDelete = new ArrayList<>();
-                    for (byte I = 0; I<size; I++){
-                        if (selected.valueAt(I)) {
-                            int curItemNumber = selected.keyAt(I);
-                            itemsToDelete.add(curItemNumber);
-                        }
-                    }
-                    getUserConfirmationAndDelete(itemsToDelete);
-
-                    // Close CAB (Contextual Action Bar)
-                    mode.finish();
-                    return true;
-                }
-                else if (item.getItemId() == R.id.action_select_all){
-                    for ( int i=0; i < fListView.getAdapter().getCount(); i++) {
-                        fListView.setItemChecked(i, true);
-                    }
-                }
-                return false;
-            }
-
-            /**
-             * Called when action mode is first created.
-             * The menu supplied will be used to generate action buttons for the action mode.
-             * @param mode ActionMode being created
-             * @param menu Menu used to populate action buttons
-             * @return true if the action mode should be created,
-             *          false if entering this mode should be aborted.
-             */
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                // Hide action bar
-                AppCompatActivity activity = (AppCompatActivity) getActivity();
-                if (activity != null && activity.getSupportActionBar() != null) {
-                    activity.getSupportActionBar().hide();
-                }
-
-                // Show contextual action menu
-                mode.getMenuInflater().inflate(R.menu.menu_list_context, menu);
-
-                // Notify activity about the action mode, so that ui elements may be hidden
-                ((ShopFragment.Callback)getActivity()).onShopFragmentActionMode(true);
-
-                // Set action mode on adapter to change drawing mode
-                mShopAdapter.setActionMode(true);
-
-                return true;
-            }
-
-            /**
-             * Called when an action mode is about to be exited and destroyed.
-             */
-            @Override
-            public void onDestroyActionMode(ActionMode mode) {
-                // Show action bar
-                AppCompatActivity activity = (AppCompatActivity) getActivity();
-                if (activity != null && activity.getSupportActionBar() != null) {
-                    activity.getSupportActionBar().show();
-                }
-
-                // Notify activity that action mode is done
-                ((ShopFragment.Callback)getActivity()).onShopFragmentActionMode(false);
-
-                // Notify adapter that action mode is done
-                mShopAdapter.setActionMode(false);
-            }
-
-            /**
-             * Called to refresh an action mode's action menu whenever it is invalidated.
-             * @return true if the menu or action mode was updated, false otherwise.
-             */
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
-            }
-        });
-
-    }
-
-    private void getUserConfirmationAndDelete(final ArrayList<Integer> itemsToDelete) {
+    @Override
+    public void onActionModeFinished(final ArrayList<Integer> itemsToDelete) {
         final ShopFragment fShopFragment = this;
 
         new AlertDialog.Builder(getActivity())
                 .setCancelable(true)
                 .setTitle(R.string.dialog_delete_shops_title)
-                .setMessage(getActivity().getString(R.string.dialog_delete_shops_question, Integer.toString(itemsToDelete.size())))
+                .setMessage((itemsToDelete.size() == 1) ?
+                        getActivity().getString(R.string.dialog_delete_shop_categories_question_one,
+                                Integer.toString(itemsToDelete.size())) :
+                        getActivity().getString(R.string.dialog_delete_shops_question,
+                                Integer.toString(itemsToDelete.size()))
+                )
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        mShopAdapter.remove(itemsToDelete);
+                        mShopAdapter.deleteEntries(itemsToDelete, COL_SHOP_ID);
 
                         // Re-initalize loader after data was removed
                         getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, fShopFragment).forceLoad();

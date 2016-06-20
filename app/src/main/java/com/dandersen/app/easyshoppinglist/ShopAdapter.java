@@ -2,8 +2,6 @@ package com.dandersen.app.easyshoppinglist;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
-import com.dandersen.app.easyshoppinglist.data.Utilities;
+import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;
 
 import java.util.ArrayList;
@@ -20,17 +18,12 @@ import java.util.ArrayList;
  * {@link ShopAdapter} exposes a list of shops
  * from a {@link android.database.Cursor} to a {@link android.widget.ListView}.
  */
-public class ShopAdapter extends CursorAdapter {
+public class ShopAdapter extends ActionModeCursorAdapter {
 
     private boolean mTwoPaneLayout = true;
-    private boolean mActionMode = false;
-
-    private SparseBooleanArray mSelectedItemsIds;
 
     public ShopAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags);
-
-        mSelectedItemsIds = new SparseBooleanArray();
+        super(context, c, flags, R.id.list_item_shop_shopping_cart, R.drawable.ic_shopping_cart_black_24dp);
     }
 
     public void setTwoPaneLayout(boolean twoPaneLayout) {
@@ -80,6 +73,8 @@ public class ShopAdapter extends CursorAdapter {
      */
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
+        super.bindView(view, context, cursor);
+
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
         // Open now
@@ -106,21 +101,6 @@ public class ShopAdapter extends CursorAdapter {
         String city = cursor.getString(ShopFragment.COL_SHOP_CITY);
         viewHolder.shopAddressView.setText(StringUtil.buildShopAddress(
                 streetName, streetNumber, city));
-
-        if (mActionMode) {
-            int position = cursor.getPosition();
-            if (mSelectedItemsIds.get(position)) {
-                // Item is checked
-                viewHolder.shoppingCartView.setImageResource(R.drawable.ic_check_box_black_24dp);
-            }
-            else {
-                // Item is not checked
-                viewHolder.shoppingCartView.setImageResource(R.drawable.ic_check_box_outline_blank_black_24dp);
-            }
-        }
-        else {
-            viewHolder.shoppingCartView.setImageResource(R.drawable.ic_shopping_cart_black_24dp);
-        }
     }
 
     /**
@@ -135,55 +115,30 @@ public class ShopAdapter extends CursorAdapter {
         return -1;
     }
 
+    /**
+     * We override this to let our activity know that action mode has changed.
+     * @param actionMode Action mode (true) or not (false)
+     */
+    @Override
     public void setActionMode(boolean actionMode) {
-        mActionMode = actionMode;
-        mSelectedItemsIds.clear();
-    }
+        super.setActionMode(actionMode);
 
-    public void remove(ArrayList<Integer> itemsToDelete) {
-        final String itemSep = " , ";
-        final String bind = "?";
-
-        if (!itemsToDelete.isEmpty()) {
-            ArrayList<String> bindIdList = new ArrayList<>();
-            StringBuilder sb = new StringBuilder();
-            for (Integer index : itemsToDelete) {
-                Cursor cursor = (Cursor) getItem(index);
-                int shopId = cursor.getInt(ShopFragment.COL_SHOP_ID);
-                if (shopId > 0) {
-                    if (sb.length() > 0) {
-                        sb.append(itemSep);
-                    }
-                    sb.append(bind);
-                    bindIdList.add(Integer.toString(shopId));
-                }
-            }
-            String[] bindIdStringArray = new String[bindIdList.size()];
-            bindIdStringArray = bindIdList.toArray(bindIdStringArray);
-            mContext.getContentResolver().delete(
-                    ShoppingContract.ShopEntry.CONTENT_URI,
-                    ShoppingContract.ShopEntry._ID + " IN ( " + sb.toString() + " )",
-                    bindIdStringArray
-            );
-            mSelectedItemsIds.clear();
-            notifyDataSetChanged();
+        if (actionMode) {
+            // Notify activity about the action mode, so that ui elements may be hidden
+            ((ShopFragment.Callback)mContext).onShopFragmentActionMode(true);
+        }
+        else {
+            // Notify activity about the action mode, so that ui elements may be hidden
+            ((ShopFragment.Callback)mContext).onShopFragmentActionMode(false);
         }
     }
 
-    public void toggleSelection(int position, boolean checked) {
-        selectView(position, checked);
-//        selectView(position, !mSelectedItemsIds.get(position));
-    }
-
-    public void selectView(int position, boolean value) {
-        if (value)
-            mSelectedItemsIds.put(position, true);
-        else
-            mSelectedItemsIds.delete(position);
-        notifyDataSetChanged();
-    }
-
-    public SparseBooleanArray getSelectedIds() {
-        return mSelectedItemsIds;
+    @Override
+    protected void onDeleteEntries(StringBuilder idSelection, String[] idSelectionArgs) {
+        mContext.getContentResolver().delete(
+                ShoppingContract.ShopEntry.CONTENT_URI,
+                ShoppingContract.ShopEntry._ID + " IN ( " + idSelection.toString() + " )",
+                idSelectionArgs
+        );
     }
 }
