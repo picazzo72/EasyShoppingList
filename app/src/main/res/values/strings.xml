@@ -41,6 +41,7 @@
     <string name="shop_detail_phone_number_hint">Phone number</string>
     <string name="shop_detail_opening_hours_icon">Opening hours</string>
     <string name="shop_detail_categories">Category list</string>
+    <string name="shop_categories_explained">Drag and drop to reorder\nSwipe to delete</string>
 
     // Dialogs
     <string name="dialog_new_product">Enter new product name</string>
@@ -53,10 +54,6 @@
     <string name="dialog_delete_shops_title">Delete stores</string>
     <string name="dialog_delete_shops_question">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store(s)?</string>
     <string name="dialog_delete_shops_question_one">Are you sure you want to delete <xliff:g id="number_of_shops">%1$s</xliff:g> store?</string>
-
-    <string name="dialog_delete_shop_categories_title">Delete store categories</string>
-    <string name="dialog_delete_shop_categories_question">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> categories?</string>
-    <string name="dialog_delete_shop_categories_question_one">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> category?</string>
 
     <string name="dialog_delete_products_title">Delete products</string>
     <string name="dialog_delete_products_question">Are you sure you want to delete <xliff:g id="number_of_categories">%1$s</xliff:g> products?</string>

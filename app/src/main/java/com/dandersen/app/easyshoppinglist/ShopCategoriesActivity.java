@@ -1,10 +1,8 @@
 package com.dandersen.app.easyshoppinglist;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 
 /**
  * Created by Dan on 15-06-2016.
@@ -30,17 +28,6 @@ public class ShopCategoriesActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragment_shop_categories, fragment)
                 .commit();
-
-        // Set action for Floating Action button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        if (fab != null) {
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    //createProduct(view);
-                }
-            });
-        }
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);

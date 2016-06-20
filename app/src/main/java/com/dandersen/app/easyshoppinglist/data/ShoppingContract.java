@@ -244,6 +244,10 @@ public class ShoppingContract {
         public static Uri buildShopCategoryUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+        public static String getShopCategoryIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
     }
 
     public static final class ShoppingListProductsEntry implements BaseColumns {

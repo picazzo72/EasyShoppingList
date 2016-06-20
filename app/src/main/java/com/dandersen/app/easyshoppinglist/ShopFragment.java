@@ -183,7 +183,7 @@ public class ShopFragment extends Fragment
                 .setCancelable(true)
                 .setTitle(R.string.dialog_delete_shops_title)
                 .setMessage((itemsToDelete.size() == 1) ?
-                        getActivity().getString(R.string.dialog_delete_shop_categories_question_one,
+                        getActivity().getString(R.string.dialog_delete_shops_question_one,
                                 Integer.toString(itemsToDelete.size())) :
                         getActivity().getString(R.string.dialog_delete_shops_question,
                                 Integer.toString(itemsToDelete.size()))

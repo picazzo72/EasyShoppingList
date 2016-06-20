@@ -138,7 +138,7 @@ public class Utilities {
                     // Insert category
                     ContentValues categoryValues = new ContentValues();
                     categoryValues.put(ShoppingContract.CategoryEntry.COLUMN_NAME, (String) pair.getKey());
-                    categoryValues.put(ShoppingContract.CategoryEntry.COLUMN_SORT_ORDER, insertCategoriesCount + 1);
+                    categoryValues.put(ShoppingContract.CategoryEntry.COLUMN_SORT_ORDER, insertCategoriesCount);
                     categoryValues.put(ShoppingContract.CategoryEntry.COLUMN_COLOR, colors[colorIndex++]);
                     long categoryId = db.insert(ShoppingContract.CategoryEntry.TABLE_NAME, null, categoryValues);
                     if (categoryId != -1) {

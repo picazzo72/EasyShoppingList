@@ -12,7 +12,6 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.dandersen.app.easyshoppinglist.data.SelectedViewEnum;
 import com.dandersen.app.easyshoppinglist.prefs.Settings;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;

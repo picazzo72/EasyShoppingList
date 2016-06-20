@@ -34,8 +34,9 @@ public class ShoppingProvider extends ContentProvider {
     static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
     static final int SHOP = 400;                    // Shop list
     static final int SHOP_INFO = 401;               // Shop entry info
-    static final int SHOP_CATEGORIES = 402;         // Shop categories
     static final int SHOPPING_LIST_PRODUCTS = 500;  // Shopping list/products/shop rel table
+    static final int SHOP_CATEGORIES = 600;         // Shop categories
+    static final int SHOP_CATEGORY_INFO = 601;      // Shop category info
 
     private static final SQLiteQueryBuilder sProductByCategoryQueryBuilder;
 
@@ -102,9 +103,10 @@ public class ShoppingProvider extends ContentProvider {
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
         matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_INFO);
 
-        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY, SHOP_CATEGORIES);
-
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCTS, SHOPPING_LIST_PRODUCTS);
+
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY, SHOP_CATEGORIES);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY + "/*", SHOP_CATEGORY_INFO);
 
         // Return the new matcher!
         return matcher;
@@ -134,6 +136,8 @@ public class ShoppingProvider extends ContentProvider {
                 return ShoppingContract.ShoppingListEntry.CONTENT_ITEM_TYPE;
             case SHOP_INFO:
                 return ShoppingContract.ShopEntry.CONTENT_ITEM_TYPE;
+            case SHOP_CATEGORY_INFO:
+                return ShoppingContract.ShopCategoryEntry.CONTENT_ITEM_TYPE;
             // The rest are DIR cases
             case CATEGORY:
                 return ShoppingContract.CategoryEntry.CONTENT_TYPE;
@@ -292,6 +296,25 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getShopCategoryEntry(Uri uri, String[] projection) {
+        String shopIdFromUri = ShoppingContract.ShopCategoryEntry.getShopCategoryIdFromUri(uri);
+
+        String selection = ShoppingContract.ShopCategoryEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shopIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Shop category by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.ShopCategoryEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+    }
+
     private Cursor getShoppingListProducts(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.i(LOG_TAG, "DSA LOG - Shopping list products rel");
@@ -363,6 +386,11 @@ public class ShoppingProvider extends ContentProvider {
             case SHOP_CATEGORIES:
             {
                 retCursor = getShopCategories(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+            case SHOP_CATEGORY_INFO:
+            {
+                retCursor = getShopCategoryEntry(uri, projection);
                 break;
             }
             case SHOPPING_LIST_PRODUCTS:
@@ -452,6 +480,21 @@ public class ShoppingProvider extends ContentProvider {
         return returnUri;
     }
 
+    private int deleteShopCategoryEntry(Uri uri) {
+        String shopCategoryIdFromUri = ShoppingContract.ShopCategoryEntry.getShopCategoryIdFromUri(uri);
+
+        String selection = ShoppingContract.ShopCategoryEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shopCategoryIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Delete shop category by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getWritableDatabase().delete(
+                ShoppingContract.ShopCategoryEntry.TABLE_NAME,
+                selection,
+                selectionArgs
+        );
+    }
+
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         // Start by getting a writable database
@@ -486,6 +529,11 @@ public class ShoppingProvider extends ContentProvider {
                 case SHOP_CATEGORIES:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShopCategoryEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
+                }
+                case SHOP_CATEGORY_INFO:
+                {
+                    numberOfDeletedRows = deleteShopCategoryEntry(uri);
                     break;
                 }
                 case SHOPPING_LIST_PRODUCTS:
@@ -548,6 +596,7 @@ public class ShoppingProvider extends ContentProvider {
                     break;
                 }
                 case SHOP_CATEGORIES:
+                case SHOP_CATEGORY_INFO:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopCategoryEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
