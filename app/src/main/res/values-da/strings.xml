@@ -14,8 +14,8 @@
     <string name="action_delete">Slet</string>
     <string name="action_select_all">Vælg alle</string>
     <string name="action_edit">Redigér</string>
-    <string name="action_refresh">Opdatér</string>
-    <string name="action_reload">Genindlæs</string>
+    <string name="action_refresh">Opdatér butikker</string>
+    <string name="action_reload">Hent butikker</string>
 
     // Setting keys
     <string name="pref_key_reset_product_database" translatable="false">prefKeyResetDatabase</string>
