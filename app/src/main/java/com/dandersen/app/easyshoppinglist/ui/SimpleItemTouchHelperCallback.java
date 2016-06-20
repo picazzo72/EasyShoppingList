@@ -5,7 +5,9 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 
 /**
  * Created by Dan on 20-06-2016.
- * Touch Helper callback class for setting up drag & drop and swipe
+ * Touch Helper callback class for setting up drag & drop and swipe.
+ * The method used is described here:
+ * https://medium.com/@ipaulpro/drag-and-swipe-with-recyclerview-b9456d2b1aaf#.7mhftpy4t
  */
 public class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
 

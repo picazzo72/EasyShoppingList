@@ -21,6 +21,8 @@ import java.util.ArrayList;
  * Created by Dan on 16-06-2016.
  * {@link ShopCategoriesAdapter} exposes a list of shop categories
  * from a {@link android.database.Cursor} to a {@link android.widget.ListView}.
+ * The RecyclerView method used is described here:
+ * https://medium.com/@ipaulpro/drag-and-swipe-with-recyclerview-b9456d2b1aaf#.7mhftpy4t
  */
 public class ShopCategoriesAdapter extends RecyclerView.Adapter
         implements ItemTouchHelperAdapter {
