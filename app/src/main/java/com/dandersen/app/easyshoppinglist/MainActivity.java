@@ -206,8 +206,19 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onCurrentList() {
-        Settings.getInstance().setSelectedView(SelectedViewEnum.CurrentList);
+    public void onActiveList() {
+        Settings.getInstance().setSelectedView(SelectedViewEnum.ActiveList);
+
+        // Create a new Fragment to be placed in the activity layout
+        ActiveListFragment fragment = new ActiveListFragment();
+
+        // In case this activity was started with special instructions from an
+        // Intent, pass the Intent's extras to the fragment as arguments
+        fragment.setArguments(getIntent().getExtras());
+
+        // Add the fragment to the 'fragment_container' FrameLayout
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment).commit();
     }
 
     @Override

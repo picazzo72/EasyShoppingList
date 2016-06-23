@@ -3,7 +3,6 @@ package com.dandersen.app.easyshoppinglist;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +31,7 @@ public class ButtonFragment extends Fragment {
         /**
          * ButtonFragmentCallback for when a button has been selected.
          */
-        void onCurrentList();
+        void onActiveList();
         void onShoppingList();
         void onCategory();
         void onProduct();
@@ -97,7 +96,7 @@ public class ButtonFragment extends Fragment {
         ViewHolder viewHolder = (ViewHolder) getView().getTag();
 
         switch (Settings.getInstance().getSelectedView()) {
-            case CurrentList:
+            case ActiveList:
                 viewHolder.currentListGroup.callOnClick();
                 break;
             case ShoppingList:
@@ -134,8 +133,8 @@ public class ButtonFragment extends Fragment {
         viewHolder.currentListGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setSelectedView(SelectedViewEnum.CurrentList);
-                ((Callback)getActivity()).onCurrentList();
+                setSelectedView(SelectedViewEnum.ActiveList);
+                ((Callback)getActivity()).onActiveList();
             }
         });
         viewHolder.shoppingListGroup.setOnClickListener(new View.OnClickListener() {
@@ -178,7 +177,7 @@ public class ButtonFragment extends Fragment {
         restoreButtons();
 
         switch (pos) {
-            case CurrentList:
+            case ActiveList:
                 viewHolder.currentListIcon.setImageResource(R.drawable.ic_shopping_cart_red_36dp);
                 break;
             case ShoppingList:

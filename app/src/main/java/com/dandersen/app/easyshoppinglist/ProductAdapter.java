@@ -1,13 +1,17 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
+import com.dandersen.app.easyshoppinglist.data.Utilities;
 import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 
 /**
@@ -20,7 +24,7 @@ public class ProductAdapter extends ActionModeCursorAdapter {
     private static boolean mTwoPaneLayout = true;
 
     public ProductAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags, R.id.list_item_product_shopping_cart,
+        super(context, c, flags, R.id.list_item_shopping_cart,
                 R.drawable.ic_shopping_cart_black_24dp);
     }
 
@@ -34,10 +38,12 @@ public class ProductAdapter extends ActionModeCursorAdapter {
     private static class ViewHolder {
         public final TextView productNameView;
         public final TextView categoryNameView;
+        public final ImageView shoppingCartView;
 
         public ViewHolder(View view) {
             productNameView     = (TextView) view.findViewById(R.id.list_item_product_name);
             categoryNameView    = (TextView) view.findViewById(R.id.list_item_category_name);
+            shoppingCartView    = (ImageView) view.findViewById(R.id.list_item_shopping_cart);
         }
     }
 
@@ -75,8 +81,74 @@ public class ProductAdapter extends ActionModeCursorAdapter {
         String productName = cursor.getString(ProductFragment.COL_PRODUCT_NAME);
         viewHolder.productNameView.setText(productName);
 
+        // Category name
         String categoryName = cursor.getString(ProductFragment.COL_CATEGORY_NAME);
         viewHolder.categoryNameView.setText(categoryName);
+
+        // Shopping cart icon
+        Long productId = cursor.getLong(ProductFragment.COL_PRODUCT_ID);
+        viewHolder.shoppingCartView.setTag(R.id.product_id_tag, productId);
+
+        // Shopping list product id
+        if (cursor.isNull(ProductFragment.COL_SHOPPING_LIST_PRODUCT_ID)) {
+            setProductAsOffActiveList(viewHolder.shoppingCartView);
+            viewHolder.shoppingCartView.setTag(R.id.shopping_list_product_id_tag, null);
+        }
+        else {
+            setProductAsOnActiveList(viewHolder.shoppingCartView);
+            Long shoppingListProductId = cursor.getLong(ProductFragment.COL_SHOPPING_LIST_PRODUCT_ID);
+            viewHolder.shoppingCartView.setTag(R.id.shopping_list_product_id_tag, shoppingListProductId);
+        }
+
+        setupAddToActiveListClickListener(viewHolder);
+    }
+
+    private void setupAddToActiveListClickListener(ViewHolder viewHolder) {
+        viewHolder.shoppingCartView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ImageView shoppingCartView = (ImageView) view;
+                if ((int)shoppingCartView.getTag(R.id.drawable_id_tag) == R.drawable.ic_shopping_cart_red_24dp) {
+                    Object object = shoppingCartView.getTag(R.id.shopping_list_product_id_tag);
+                    if (object == null) return;
+                    Long shoppingListProductId = (Long) object;
+                    // Delete product from active list
+                    mContext.getContentResolver().delete(
+                            ShoppingContract.ShoppingListProductEntry.
+                                    buildShoppingListProductsUri(shoppingListProductId),
+                            null,
+                            null);
+
+                    setProductAsOffActiveList(shoppingCartView);
+                }
+                else {
+                    Long productId = (Long) view.getTag(R.id.product_id_tag);
+                    Long activeShoppingListId = Utilities.getActiveShoppingListId(mContext);
+                    if (activeShoppingListId == null) return;
+
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID, productId);
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID, activeShoppingListId);
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, ShoppingContract.ShopEntry.DEFAULT_STORE_ID);
+
+                    // Insert shopping list product entry
+                    Uri insertUri = mContext.getContentResolver().insert(
+                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI, contentValues);
+
+                    setProductAsOnActiveList(shoppingCartView);
+                }
+            }
+        });
+    }
+
+    private void setProductAsOffActiveList(ImageView shoppingCartView) {
+        shoppingCartView.setImageResource(R.drawable.ic_shopping_cart_black_24dp);
+        shoppingCartView.setTag(R.id.drawable_id_tag, R.drawable.ic_shopping_cart_black_24dp);
+    }
+
+    private void setProductAsOnActiveList(ImageView shoppingCartView) {
+        shoppingCartView.setImageResource(R.drawable.ic_shopping_cart_red_24dp);
+        shoppingCartView.setTag(R.id.drawable_id_tag, R.drawable.ic_shopping_cart_red_24dp);
     }
 
     /**

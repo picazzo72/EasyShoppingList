@@ -46,7 +46,7 @@ public class TestDb extends AndroidTestCase {
         tableNameHashSet.add(ShoppingContract.CategoryEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ProductEntry.TABLE_NAME);
         tableNameHashSet.add(ShoppingContract.ShopEntry.TABLE_NAME);
-        tableNameHashSet.add(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME);
+        tableNameHashSet.add(ShoppingContract.ShoppingListProductEntry.TABLE_NAME);
 
         mContext.deleteDatabase(ShoppingDbHelper.DATABASE_NAME);
         SQLiteDatabase db = ShoppingDbHelper.getInstance(mContext).getWritableDatabase();
@@ -86,7 +86,7 @@ public class TestDb extends AndroidTestCase {
             // Build a HashSet of all of the column names we want to look for
             final HashSet<String> columnHashSet = new HashSet<>();
             columnHashSet.add(ShoppingContract.ShoppingListEntry._ID);
-            columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_DATE);
+            columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_CREATED);
             columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_AMOUNT);
             columnHashSet.add(ShoppingContract.ShoppingListEntry.COLUMN_NOTE);
 
@@ -214,7 +214,7 @@ public class TestDb extends AndroidTestCase {
         }
 
         try {
-            c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ShoppingListProductsEntry.TABLE_NAME + ")",
+            c = db.rawQuery("PRAGMA table_info(" + ShoppingContract.ShoppingListProductEntry.TABLE_NAME + ")",
                     null);
 
             assertTrue("Error: This means that we were unable to query the database for shopping list products table information.",
@@ -222,11 +222,11 @@ public class TestDb extends AndroidTestCase {
 
             // Build a HashSet of all of the column names we want to look for
             final HashSet<String> columnHashSet = new HashSet<>();
-            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry._ID);
-            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_PRODUCT_ID);
-            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOPPING_LIST_ID);
-            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOP_ID);
-            columnHashSet.add(ShoppingContract.ShoppingListProductsEntry.COLUMN_SORT_ORDER);
+            columnHashSet.add(ShoppingContract.ShoppingListProductEntry._ID);
+            columnHashSet.add(ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID);
+            columnHashSet.add(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID);
+            columnHashSet.add(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID);
+            columnHashSet.add(ShoppingContract.ShoppingListProductEntry.COLUMN_SORT_ORDER);
 
             int columnNameIndex = c.getColumnIndex("name");
 
@@ -445,13 +445,13 @@ public class TestDb extends AndroidTestCase {
         ContentValues contentValues = TestUtilities.createShoppingListProductsValues(shoppingListId, productId, shopId);
 
         // Insert ContentValues into database and get a row ID back
-        long rowId = db.insert(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, null, contentValues);
+        long rowId = db.insert(ShoppingContract.ShoppingListProductEntry.TABLE_NAME, null, contentValues);
         assertTrue("Error: Database insert of shopping list products entry failed: " + Long.toString(rowId), rowId > 0);
 
         // Query the database and receive a Cursor back
-        Cursor c = db.query(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME,
+        Cursor c = db.query(ShoppingContract.ShoppingListProductEntry.TABLE_NAME,
                 null,
-                ShoppingContract.ShoppingListProductsEntry._ID + " = ?",
+                ShoppingContract.ShoppingListProductEntry._ID + " = ?",
                 new String[]{ Long.toString(rowId) },
                 null, null,
                 null);

@@ -19,6 +19,25 @@
         <item>Øl/vin/spiritus</item>
     </string-array>
 
+    <integer-array name="category_sortorder">
+        <item>11</item>   // Baking
+        <item>1</item>   // Bread
+        <item>8</item>   // Fish
+        <item>9</item>   // Frozen
+        <item>0</item>   // Fruit/veg
+        <item>14</item>   // House hold
+        <item>10</item>   // Coffee/tea
+        <item>15</item>   // Kiosk
+        <item>2</item>   // Colonial
+        <item>12</item>   // Spices
+        <item>7</item>   // Meat
+        <item>3</item>   // Jam
+        <item>6</item>   // Dairy
+        <item>4</item>   // Cereal
+        <item>5</item>   // Cold cut
+        <item>13</item>   // Beer/wine/liqueor
+    </integer-array>
+
     <string-array name="dairy_products">
         <item>A38</item>
         <item>Bakkedal</item>

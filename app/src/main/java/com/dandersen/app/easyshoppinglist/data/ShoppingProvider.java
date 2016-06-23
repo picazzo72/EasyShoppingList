@@ -26,32 +26,41 @@ public class ShoppingProvider extends ContentProvider {
     private ShoppingDbHelper mOpenHelper;
 
     // URI definitions
-    static final int CATEGORY = 100;                // Category list
-    static final int PRODUCT = 200;                 // Product list
-    static final int PRODUCT_BY_CATEGORY = 201;     // Product list for category
-    static final int PRODUCT_WITH_CATEGORY = 202;   // Product list with category (with category columns)
-    static final int SHOPPING_LIST = 300;           // Shopping lists
-    static final int SHOPPING_LIST_ACTIVE = 301;    // Currently active shopping list
-    static final int SHOP = 400;                    // Shop list
-    static final int SHOP_INFO = 401;               // Shop entry info
-    static final int SHOPPING_LIST_PRODUCTS = 500;  // Shopping list/products/shop rel table
-    static final int SHOP_CATEGORIES = 600;         // Shop categories
-    static final int SHOP_CATEGORY_INFO = 601;      // Shop category info
+    static final int CATEGORY = 100;                    // Category list
+    static final int CATEGORY_ITEM = 101;               // Category item
+    static final int PRODUCT = 200;                     // Product list
+    static final int PRODUCT_BY_CATEGORY = 201;         // Product list for category
+    static final int PRODUCT_WITH_CATEGORY = 202;       // Product list with category (with category columns)
+    static final int PRODUCT_ACTIVE_LIST = 203;         // Products for currently active shopping list
+    static final int SHOPPING_LIST = 300;               // Shopping lists
+    static final int SHOPPING_LIST_ITEM = 301;          // Shopping list item
+    static final int SHOP = 400;                        // Shop list
+    static final int SHOP_ITEM = 401;                   // Shop entry item
+    static final int SHOPPING_LIST_PRODUCT = 500;       // Shopping list/products/shop rel list
+    static final int SHOPPING_LIST_PRODUCT_ITEM = 501;  // Shopping list/products/shop rel item
+    static final int SHOP_CATEGORY = 600;               // Shop category
+    static final int SHOP_CATEGORY_ITEM = 601;          // Shop category item
 
     private static final SQLiteQueryBuilder sProductByCategoryQueryBuilder;
 
     static{
         sProductByCategoryQueryBuilder = new SQLiteQueryBuilder();
 
-        //This is an inner join which looks like
+        //This is a join which looks like
         //product INNER JOIN category ON product.category_id = category._id
+        //        LEFT JOIN shoppinglistproduct ON product.id = shoppinglistproduct.product_id
         sProductByCategoryQueryBuilder.setTables(
                 ShoppingContract.ProductEntry.TABLE_NAME + " INNER JOIN " +
                         ShoppingContract.CategoryEntry.TABLE_NAME +
                         " ON " + ShoppingContract.ProductEntry.TABLE_NAME +
                         "." + ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID +
                         " = " + ShoppingContract.CategoryEntry.TABLE_NAME +
-                        "." + ShoppingContract.CategoryEntry._ID);
+                        "." + ShoppingContract.CategoryEntry._ID +
+                        " LEFT JOIN " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                        " ON " + ShoppingContract.ProductEntry.TABLE_NAME +
+                        "." + ShoppingContract.ProductEntry._ID +
+                        " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID);
     }
 
     private static final SQLiteQueryBuilder sShopCategoriesQueryBuilder;
@@ -75,9 +84,55 @@ public class ShoppingProvider extends ContentProvider {
                         "." + ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID);
     }
 
+    private static final SQLiteQueryBuilder sActiveListQueryBuilder;
+
+    static{
+        sActiveListQueryBuilder = new SQLiteQueryBuilder();
+
+        //product INNER JOIN shoppinglistproducts ON product.id = shoppinglistproducts.product_id
+        //        INNER JOIN shop ON shop.id = shoppinglistproducts.shop_id
+        //        INNER JOIN category on category.id = product.id
+        //        INNER JOIN shoppinglist on shoppinglist.id = shoppinglistproducts.shopping_list_id
+        sActiveListQueryBuilder.setTables(
+        ShoppingContract.ShoppingListProductEntry.TABLE_NAME + " INNER JOIN " +
+                ShoppingContract.ProductEntry.TABLE_NAME +
+                " ON " + ShoppingContract.ProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ProductEntry._ID +
+                " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID +
+
+                " INNER JOIN " + ShoppingContract.ShopEntry.TABLE_NAME +
+                " ON " + ShoppingContract.ShopEntry.TABLE_NAME +
+                "." + ShoppingContract.ShopEntry._ID +
+                " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID +
+
+                " INNER JOIN " + ShoppingContract.CategoryEntry.TABLE_NAME +
+                " ON " + ShoppingContract.CategoryEntry.TABLE_NAME +
+                "." + ShoppingContract.CategoryEntry._ID +
+                " = " + ShoppingContract.ProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ProductEntry.COLUMN_CATEGORY_ID +
+
+                " INNER JOIN " + ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                " ON (" + ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                "." + ShoppingContract.ShopCategoryEntry.COLUMN_CATEGORY_ID +
+                " = " + ShoppingContract.CategoryEntry.TABLE_NAME +
+                "." + ShoppingContract.CategoryEntry._ID + " AND " +
+                ShoppingContract.ShopCategoryEntry.TABLE_NAME +
+                "." + ShoppingContract.ShopCategoryEntry.COLUMN_SHOP_ID +
+                " = " + ShoppingContract.ShopEntry.TABLE_NAME +
+                "." + ShoppingContract.ShopEntry._ID + ")" +
+
+                " INNER JOIN " + ShoppingContract.ShoppingListEntry.TABLE_NAME +
+                " ON " + ShoppingContract.ShoppingListEntry.TABLE_NAME +
+                "." + ShoppingContract.ShoppingListEntry._ID +
+                " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID);
+    }
+
     //category.name = ?
     private static final String sCategorySelection =
-            ShoppingContract.CategoryEntry.TABLE_NAME+
+            ShoppingContract.CategoryEntry.TABLE_NAME +
                     "." + ShoppingContract.CategoryEntry.COLUMN_NAME + " = ? ";
 
     /*
@@ -91,22 +146,25 @@ public class ShoppingProvider extends ContentProvider {
 
         // The addURI function is used to match each of the types
         matcher.addURI(authority, ShoppingContract.PATH_CATEGORY, CATEGORY);
+        matcher.addURI(authority, ShoppingContract.PATH_CATEGORY + "/*", CATEGORY_ITEM);
 
         matcher.addURI(authority, ShoppingContract.PATH_PRODUCT, PRODUCT);
         matcher.addURI(authority, ShoppingContract.PATH_PRODUCT + "/*", PRODUCT_BY_CATEGORY);
 
         matcher.addURI(authority, ShoppingContract.PATH_PRODUCT_WITH_CATEGORY, PRODUCT_WITH_CATEGORY);
+        matcher.addURI(authority, ShoppingContract.PATH_PRODUCT_ACTIVE_LIST, PRODUCT_ACTIVE_LIST);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST, SHOPPING_LIST);
-        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST + "/*", SHOPPING_LIST_ACTIVE);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST + "/*", SHOPPING_LIST_ITEM);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
-        matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_INFO);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_ITEM);
 
-        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCTS, SHOPPING_LIST_PRODUCTS);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCT, SHOPPING_LIST_PRODUCT);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCT + "/*", SHOPPING_LIST_PRODUCT_ITEM);
 
-        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY, SHOP_CATEGORIES);
-        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY + "/*", SHOP_CATEGORY_INFO);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY, SHOP_CATEGORY);
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_CATEGORY + "/*", SHOP_CATEGORY_ITEM);
 
         // Return the new matcher!
         return matcher;
@@ -132,12 +190,16 @@ public class ShoppingProvider extends ContentProvider {
 
         switch (match) {
             // These cases return a single ITEM
-            case SHOPPING_LIST_ACTIVE:
-                return ShoppingContract.ShoppingListEntry.CONTENT_ITEM_TYPE;
-            case SHOP_INFO:
+            case CATEGORY_ITEM:
+                return ShoppingContract.CategoryEntry.CONTENT_ITEM_TYPE;
+            case SHOP_ITEM:
                 return ShoppingContract.ShopEntry.CONTENT_ITEM_TYPE;
-            case SHOP_CATEGORY_INFO:
+            case SHOPPING_LIST_ITEM:
+                return ShoppingContract.ShoppingListEntry.CONTENT_ITEM_TYPE;
+            case SHOP_CATEGORY_ITEM:
                 return ShoppingContract.ShopCategoryEntry.CONTENT_ITEM_TYPE;
+            case SHOPPING_LIST_PRODUCT_ITEM:
+                return ShoppingContract.ShoppingListProductEntry.CONTENT_ITEM_TYPE;
             // The rest are DIR cases
             case CATEGORY:
                 return ShoppingContract.CategoryEntry.CONTENT_TYPE;
@@ -147,20 +209,22 @@ public class ShoppingProvider extends ContentProvider {
                 return ShoppingContract.ProductEntry.CONTENT_TYPE;
             case PRODUCT_WITH_CATEGORY:
                 return ShoppingContract.ProductEntry.CONTENT_TYPE;
+            case PRODUCT_ACTIVE_LIST:
+                return ShoppingContract.ProductEntry.CONTENT_TYPE;
             case SHOPPING_LIST:
                 return ShoppingContract.ShoppingListEntry.CONTENT_TYPE;
             case SHOP:
                 return ShoppingContract.ShopEntry.CONTENT_TYPE;
-            case SHOPPING_LIST_PRODUCTS:
-                return ShoppingContract.ShoppingListProductsEntry.CONTENT_TYPE;
-            case SHOP_CATEGORIES:
+            case SHOPPING_LIST_PRODUCT:
+                return ShoppingContract.ShoppingListProductEntry.CONTENT_TYPE;
+            case SHOP_CATEGORY:
                 return ShoppingContract.ShopCategoryEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
     }
 
-    private Cursor getCategory(
+    private Cursor getCategoryList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.i(LOG_TAG, "DSA LOG - Category list");
 
@@ -172,6 +236,25 @@ public class ShoppingProvider extends ContentProvider {
                 null,
                 null,
                 sortOrder
+        );
+    }
+
+    private Cursor getCategoryEntry(Uri uri, String[] projection) {
+        String categoryIdFromUri = ShoppingContract.CategoryEntry.getCategoryIdFromUri(uri);
+
+        String selection = ShoppingContract.ShopEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ categoryIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Category by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.CategoryEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
         );
     }
 
@@ -230,6 +313,29 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getProductActiveList(
+            String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        Log.i(LOG_TAG, "DSA LOG - Product active list");
+        Log.i(LOG_TAG, "DSA LOG - '" + sActiveListQueryBuilder.getTables() + "' - '" +
+                selection + "' - " + stringArrayToString(selectionArgs));
+
+        Cursor cursor = sActiveListQueryBuilder.query(
+                mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+
+        if (cursor != null) {
+            Log.i(LOG_TAG, "DSA LOG - Active products count: " + cursor.getCount());
+        }
+
+        return cursor;
+    }
+
     private Cursor getShoppingList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.i(LOG_TAG, "DSA LOG - Shopping_list list");
@@ -247,13 +353,31 @@ public class ShoppingProvider extends ContentProvider {
 
     private Cursor getShopList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        Log.i(LOG_TAG, "DSA LOG - Shop list '" + stringArrayToString(projection) + "'");
+        // Filter away default store
+        if (selection == null) selection = "";
+        if (!selection.isEmpty()) {
+            selection += " AND ";
+        }
+        selection += ShoppingContract.ShopEntry.TABLE_NAME + "." + ShoppingContract.ShopEntry._ID + " != ?";
+
+        String[] localSelectionArgs;
+        if (selectionArgs == null) {
+            localSelectionArgs = new String[] { Long.toString(ShoppingContract.ShopEntry.DEFAULT_STORE_ID) };
+        }
+        else {
+            localSelectionArgs = new String[selectionArgs.length + 1];
+            int i = 0;
+            for (String selectionArg : selectionArgs) localSelectionArgs[i++] = selectionArg;
+            localSelectionArgs[i] = Long.toString(ShoppingContract.ShopEntry.DEFAULT_STORE_ID);
+        }
+
+        Log.i(LOG_TAG, "Shop list - '" + selection + "' - " + stringArrayToString(localSelectionArgs));
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShopEntry.TABLE_NAME,
                 projection,
                 selection,
-                selectionArgs,
+                localSelectionArgs,
                 null,
                 null,
                 sortOrder
@@ -270,6 +394,25 @@ public class ShoppingProvider extends ContentProvider {
 
         return mOpenHelper.getReadableDatabase().query(
                 ShoppingContract.ShopEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+    }
+
+    private Cursor getShoppingListEntry(Uri uri, String[] projection) {
+        String shoppingListIdFromUri = ShoppingContract.ShopEntry.getShopIdFromUri(uri);
+
+        String selection = ShoppingContract.ShoppingListEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shoppingListIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Shopping list by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.ShoppingListEntry.TABLE_NAME,
                 projection,
                 selection,
                 selectionArgs,
@@ -315,18 +458,37 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
-    private Cursor getShoppingListProducts(
+    private Cursor getShoppingListProductList(
             String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Log.i(LOG_TAG, "DSA LOG - Shopping list products rel");
 
         return mOpenHelper.getReadableDatabase().query(
-                ShoppingContract.ShoppingListProductsEntry.TABLE_NAME,
+                ShoppingContract.ShoppingListProductEntry.TABLE_NAME,
                 projection,
                 selection,
                 selectionArgs,
                 null,
                 null,
                 sortOrder
+        );
+    }
+
+    private Cursor getShoppingListProductEntry(Uri uri, String[] projection) {
+        String shopIdFromUri = ShoppingContract.ShoppingListProductEntry.getShoppingListProductIdFromUri(uri);
+
+        String selection = ShoppingContract.ShoppingListProductEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shopIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Shopping list product by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getReadableDatabase().query(
+                ShoppingContract.ShoppingListProductEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
         );
     }
 
@@ -340,7 +502,12 @@ public class ShoppingProvider extends ContentProvider {
             // "category"
             case CATEGORY:
             {
-                retCursor = getCategory(projection, selection, selectionArgs, sortOrder);
+                retCursor = getCategoryList(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+            case CATEGORY_ITEM:
+            {
+                retCursor = getCategoryEntry(uri, projection);
                 break;
             }
             // "product"
@@ -361,6 +528,12 @@ public class ShoppingProvider extends ContentProvider {
                 retCursor = getProductWithCategory(projection, selection, selectionArgs, sortOrder);
                 break;
             }
+            // "product_active_list"
+            case PRODUCT_ACTIVE_LIST:
+            {
+                retCursor = getProductActiveList(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
             // "shopping_list"
             case SHOPPING_LIST:
             {
@@ -368,34 +541,43 @@ public class ShoppingProvider extends ContentProvider {
                 break;
             }
             // "shopping_list/*"
-            case SHOPPING_LIST_ACTIVE: // TODO
+            case SHOPPING_LIST_ITEM:
             {
-                retCursor = getShoppingList(projection, selection, selectionArgs, sortOrder);
+                retCursor = getShoppingListEntry(uri, projection);
                 break;
             }
+            // "shop"
             case SHOP:
             {
                 retCursor = getShopList(projection, selection, selectionArgs, sortOrder);
                 break;
             }
-            case SHOP_INFO:
+            // "shop/*
+            case SHOP_ITEM:
             {
                 retCursor = getShopEntry(uri, projection);
                 break;
             }
-            case SHOP_CATEGORIES:
+            // "shop_category"
+            case SHOP_CATEGORY:
             {
                 retCursor = getShopCategories(projection, selection, selectionArgs, sortOrder);
                 break;
             }
-            case SHOP_CATEGORY_INFO:
+            // "shop_category/*"
+            case SHOP_CATEGORY_ITEM:
             {
                 retCursor = getShopCategoryEntry(uri, projection);
                 break;
             }
-            case SHOPPING_LIST_PRODUCTS:
+            case SHOPPING_LIST_PRODUCT:
             {
-                retCursor = getShoppingListProducts(projection, selection, selectionArgs, sortOrder);
+                retCursor = getShoppingListProductList(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+            case SHOPPING_LIST_PRODUCT_ITEM:
+            {
+                retCursor = getShoppingListProductEntry(uri, projection);
                 break;
             }
             default:
@@ -420,55 +602,73 @@ public class ShoppingProvider extends ContentProvider {
             case CATEGORY:
             {
                 long _id = db.insert(ShoppingContract.CategoryEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Category inserted with id " + _id);
                     returnUri = ShoppingContract.CategoryEntry.buildCategoryUri(_id);
-                else
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
             case PRODUCT:
             {
                 long _id = db.insert(ShoppingContract.ProductEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Product inserted with id " + _id);
                     returnUri = ShoppingContract.ProductEntry.buildProductUri(_id);
-                else
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
             case SHOPPING_LIST:
             {
                 long _id = db.insert(ShoppingContract.ShoppingListEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Shopping list inserted with id " + _id);
                     returnUri = ShoppingContract.ShoppingListEntry.buildShoppingListUri(_id);
-                else
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
             case SHOP:
             {
                 long _id = db.insert(ShoppingContract.ShopEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Shop inserted with id " + _id);
                     returnUri = ShoppingContract.ShopEntry.buildShopUri(_id);
-                else
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
-            case SHOP_CATEGORIES:
+            case SHOP_CATEGORY:
             {
                 long _id = db.insert(ShoppingContract.ShopCategoryEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Shop category inserted with id " + _id);
                     returnUri = ShoppingContract.ShopCategoryEntry.buildShopCategoryUri(_id);
-                else
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
-            case SHOPPING_LIST_PRODUCTS:
+            case SHOPPING_LIST_PRODUCT:
             {
-                long _id = db.insert(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
-                    returnUri = ShoppingContract.ShoppingListProductsEntry.buildShoppingListProductsUri(_id);
-                else
+                long _id = db.insert(ShoppingContract.ShoppingListProductEntry.TABLE_NAME, null, values);
+                if ( _id > 0 ) {
+                    Log.i(LOG_TAG, "DSA LOG - Shopping list product inserted with id " + _id);
+                    returnUri = ShoppingContract.ShoppingListProductEntry.buildShoppingListProductsUri(_id);
+                }
+                else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
                 break;
             }
             default:
@@ -478,6 +678,51 @@ public class ShoppingProvider extends ContentProvider {
             getContext().getContentResolver().notifyChange(uri, null);
         }
         return returnUri;
+    }
+
+    private int deleteCategoryEntry(Uri uri) {
+        String categoryIdFromUri = ShoppingContract.CategoryEntry.getCategoryIdFromUri(uri);
+
+        String selection = ShoppingContract.CategoryEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ categoryIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Delete category by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getWritableDatabase().delete(
+                ShoppingContract.CategoryEntry.TABLE_NAME,
+                selection,
+                selectionArgs
+        );
+    }
+
+    private int deleteShopEntry(Uri uri) {
+        String shopIdFromUri = ShoppingContract.ShopEntry.getShopIdFromUri(uri);
+
+        String selection = ShoppingContract.ShopEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shopIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Delete shop by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getWritableDatabase().delete(
+                ShoppingContract.ShopEntry.TABLE_NAME,
+                selection,
+                selectionArgs
+        );
+    }
+
+    private int deleteShoppingListEntry(Uri uri) {
+        String shoppingListIdFromUri = ShoppingContract.ShoppingListEntry.getShoppingListIdFromUri(uri);
+
+        String selection = ShoppingContract.ShoppingListEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shoppingListIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Delete shopping list by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getWritableDatabase().delete(
+                ShoppingContract.ShoppingListEntry.TABLE_NAME,
+                selection,
+                selectionArgs
+        );
     }
 
     private int deleteShopCategoryEntry(Uri uri) {
@@ -490,6 +735,21 @@ public class ShoppingProvider extends ContentProvider {
 
         return mOpenHelper.getWritableDatabase().delete(
                 ShoppingContract.ShopCategoryEntry.TABLE_NAME,
+                selection,
+                selectionArgs
+        );
+    }
+
+    private int deleteShoppingListProductEntry(Uri uri) {
+        String shoppingListProductIdFromUri = ShoppingContract.ShoppingListProductEntry.getShoppingListProductIdFromUri(uri);
+
+        String selection = ShoppingContract.ShoppingListProductEntry._ID + "= ?";
+        String[] selectionArgs = new String[]{ shoppingListProductIdFromUri };
+
+        Log.i(LOG_TAG, "DSA LOG - Delete shopping list product by id '" + selection + "' binds: " + stringArrayToString(selectionArgs));
+
+        return mOpenHelper.getWritableDatabase().delete(
+                ShoppingContract.ShoppingListProductEntry.TABLE_NAME,
                 selection,
                 selectionArgs
         );
@@ -511,6 +771,11 @@ public class ShoppingProvider extends ContentProvider {
                     numberOfDeletedRows = db.delete(ShoppingContract.CategoryEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
+                case CATEGORY_ITEM:
+                {
+                    numberOfDeletedRows = deleteCategoryEntry(uri);
+                    break;
+                }
                 case PRODUCT:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ProductEntry.TABLE_NAME, selection, selectionArgs);
@@ -521,24 +786,39 @@ public class ShoppingProvider extends ContentProvider {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShoppingListEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
+                case SHOPPING_LIST_ITEM:
+                {
+                    numberOfDeletedRows = deleteShoppingListEntry(uri);
+                    break;
+                }
                 case SHOP:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShopEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
-                case SHOP_CATEGORIES:
+                case SHOP_ITEM:
+                {
+                    numberOfDeletedRows = deleteShopEntry(uri);
+                    break;
+                }
+                case SHOP_CATEGORY:
                 {
                     numberOfDeletedRows = db.delete(ShoppingContract.ShopCategoryEntry.TABLE_NAME, selection, selectionArgs);
                     break;
                 }
-                case SHOP_CATEGORY_INFO:
+                case SHOP_CATEGORY_ITEM:
                 {
                     numberOfDeletedRows = deleteShopCategoryEntry(uri);
                     break;
                 }
-                case SHOPPING_LIST_PRODUCTS:
+                case SHOPPING_LIST_PRODUCT:
                 {
-                    numberOfDeletedRows = db.delete(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, selection, selectionArgs);
+                    numberOfDeletedRows = db.delete(ShoppingContract.ShoppingListProductEntry.TABLE_NAME, selection, selectionArgs);
+                    break;
+                }
+                case SHOPPING_LIST_PRODUCT_ITEM:
+                {
+                    numberOfDeletedRows = deleteShoppingListProductEntry(uri);
                     break;
                 }
                 default:
@@ -574,7 +854,8 @@ public class ShoppingProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         try {
             switch (match) {
-                case CATEGORY:
+                case CATEGORY:              // fall through
+                case CATEGORY_ITEM:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.CategoryEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
@@ -584,26 +865,28 @@ public class ShoppingProvider extends ContentProvider {
                     numberOfUpdatedRows = db.update(ShoppingContract.ProductEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
-                case SHOPPING_LIST:
+                case SHOPPING_LIST:         // fall through
+                case SHOPPING_LIST_ITEM:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShoppingListEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
                 case SHOP:
-                case SHOP_INFO:
+                case SHOP_ITEM:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
-                case SHOP_CATEGORIES:
-                case SHOP_CATEGORY_INFO:
+                case SHOP_CATEGORY:         // fall through
+                case SHOP_CATEGORY_ITEM:
                 {
                     numberOfUpdatedRows = db.update(ShoppingContract.ShopCategoryEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
-                case SHOPPING_LIST_PRODUCTS:
+                case SHOPPING_LIST_PRODUCT: // fall through
+                case SHOPPING_LIST_PRODUCT_ITEM:
                 {
-                    numberOfUpdatedRows = db.update(ShoppingContract.ShoppingListProductsEntry.TABLE_NAME, values, selection, selectionArgs);
+                    numberOfUpdatedRows = db.update(ShoppingContract.ShoppingListProductEntry.TABLE_NAME, values, selection, selectionArgs);
                     break;
                 }
                 default:
@@ -649,7 +932,7 @@ public class ShoppingProvider extends ContentProvider {
                 }
                 return returnCount;
             }
-            case SHOP_CATEGORIES:
+            case SHOP_CATEGORY:
             {
                 db.beginTransaction();
                 int returnCount = 0;

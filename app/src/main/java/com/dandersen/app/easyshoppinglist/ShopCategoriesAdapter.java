@@ -63,7 +63,7 @@ public class ShopCategoriesAdapter extends RecyclerView.Adapter
                     int r = Integer.valueOf(colorItems[0]);
                     int g = Integer.valueOf(colorItems[1]);
                     int b = Integer.valueOf(colorItems[2]);
-                    view.setBackgroundColor(Color.argb(100, r, g, b));
+                    view.setBackgroundColor(Color.argb(50, r, g, b));
                 }
             }
 

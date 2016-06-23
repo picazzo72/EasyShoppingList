@@ -32,9 +32,11 @@
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/list_item_product_shopping_cart"
+        android:id="@+id/list_item_shopping_cart"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/detail_item_horizonal_padding"
+        android:paddingRight="@dimen/detail_item_horizonal_padding"
         android:src="@drawable/ic_shopping_cart_black_24dp"
         android:contentDescription="@string/list_item_product_shopping_cart_icon"
         android:scaleType="center"

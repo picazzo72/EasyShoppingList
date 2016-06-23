@@ -82,13 +82,16 @@ public class ProductFragment extends Fragment
             // So the convenience is worth it.
             ShoppingContract.ProductEntry.TABLE_NAME + "." + ShoppingContract.ProductEntry._ID,
             ShoppingContract.ProductEntry.COLUMN_NAME,
-            ShoppingContract.CategoryEntry.COLUMN_NAME
+            ShoppingContract.CategoryEntry.COLUMN_NAME,
+            ShoppingContract.ShoppingListProductEntry.TABLE_NAME + "." +
+                    ShoppingContract.ShoppingListProductEntry._ID
     };
 
     // These indices are tied to CATEGORY_COLUMNS
     static final int COL_PRODUCT_ID = 0;
     static final int COL_PRODUCT_NAME = 1;
     static final int COL_CATEGORY_NAME = 2;
+    static final int COL_SHOPPING_LIST_PRODUCT_ID = 3;
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -176,12 +179,12 @@ public class ProductFragment extends Fragment
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
         }
 
-        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
-
         // Setup item long click for item deletion
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         ActionModeListView.setupItemLongClickClistener(this, activity, mListView, mProductAdapter);
+
+        // Prepare the loader.  Either re-connect with an existing one, or start a new one.
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, arguments, this).forceLoad();
 
         return rootView;
     }

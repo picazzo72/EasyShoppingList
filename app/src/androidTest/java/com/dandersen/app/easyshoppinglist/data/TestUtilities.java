@@ -45,7 +45,7 @@ public class TestUtilities extends AndroidTestCase {
     static ContentValues createShoppingListValues() {
         ContentValues meterValues = new ContentValues();
         meterValues.put(ShoppingContract.ShoppingListEntry.COLUMN_AMOUNT, 245.6);
-        meterValues.put(ShoppingContract.ShoppingListEntry.COLUMN_DATE, TEST_DATE);
+        meterValues.put(ShoppingContract.ShoppingListEntry.COLUMN_CREATED, TEST_DATE);
         meterValues.put(ShoppingContract.ShoppingListEntry.COLUMN_NOTE, "Test shopping");
 
         return meterValues;
@@ -100,10 +100,10 @@ public class TestUtilities extends AndroidTestCase {
 
     static ContentValues createShoppingListProductsValues(long productRowId, long shoppingListRowId, long shopRowId) {
         ContentValues testValues = new ContentValues();
-        testValues.put(ShoppingContract.ShoppingListProductsEntry.COLUMN_PRODUCT_ID, productRowId);
-        testValues.put(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOPPING_LIST_ID, shoppingListRowId);
-        testValues.put(ShoppingContract.ShoppingListProductsEntry.COLUMN_SHOP_ID, shopRowId);
-        testValues.put(ShoppingContract.ShoppingListProductsEntry.COLUMN_SORT_ORDER, 1);
+        testValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID, productRowId);
+        testValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID, shoppingListRowId);
+        testValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, shopRowId);
+        testValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SORT_ORDER, 1);
 
         return testValues;
     }

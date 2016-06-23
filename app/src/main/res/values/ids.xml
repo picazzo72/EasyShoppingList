@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tag for saving product id in shopping cart icon view -->
+    <item
+        type="id"
+        name="product_id_tag" />
+
+    <!-- Tag for saving shop id in shopping cart icon view -->
+    <item
+        type="id"
+        name="shop_id_tag" />
+
+    <!-- Tag for saving drawable id in shopping cart icon view -->
+    <item
+        type="id"
+        name="drawable_id_tag" />
+
+    <!-- Tag for saving shopping list product id in shopping cart icon view -->
+    <item
+        type="id"
+        name="shopping_list_product_id_tag" />
+</resources>

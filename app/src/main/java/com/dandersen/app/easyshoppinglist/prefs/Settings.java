@@ -19,7 +19,7 @@ public class Settings {
     private final String SELECTED_VIEW = "selected_view";
 
     // Which view were last selected by the user?
-    private SelectedViewEnum mSelectedView = SelectedViewEnum.CurrentList;
+    private SelectedViewEnum mSelectedView = SelectedViewEnum.ActiveList;
 
     // Tag for nearby search automatic
     private final String NEARBY_SEARCH_AUTOMATIC = "nearby_search_automatic";
@@ -112,7 +112,7 @@ public class Settings {
             if (mSettingsLoaded) return;
 
             mSelectedView = SelectedViewEnum.fromInteger(
-                    mSharedPreferences.getInt(SELECTED_VIEW, SelectedViewEnum.CurrentList.ordinal()));
+                    mSharedPreferences.getInt(SELECTED_VIEW, SelectedViewEnum.ActiveList.ordinal()));
 
             mNearbySearchAutomatic = mSharedPreferences.getBoolean(NEARBY_SEARCH_AUTOMATIC, false);
 

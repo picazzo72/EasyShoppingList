@@ -1,5 +1,6 @@
 package com.dandersen.app.easyshoppinglist;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.view.LayoutInflater;
@@ -12,7 +13,8 @@ import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;
 
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * {@link ShopAdapter} exposes a list of shops
@@ -20,7 +22,12 @@ import java.util.ArrayList;
  */
 public class ShopAdapter extends ActionModeCursorAdapter {
 
+    private final String LOG_TAG = ShopAdapter.class.getSimpleName();
+
     private boolean mTwoPaneLayout = true;
+
+    // Set to keep track on which shops are on active list. This is updated on swapCursor
+    private HashSet<Long> mShopOnActiveListSet = new HashSet<>();
 
     public ShopAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags, R.id.list_item_shop_shopping_cart, R.drawable.ic_shopping_cart_black_24dp);
@@ -101,6 +108,122 @@ public class ShopAdapter extends ActionModeCursorAdapter {
         String city = cursor.getString(ShopFragment.COL_SHOP_CITY);
         viewHolder.shopAddressView.setText(StringUtil.buildShopAddress(
                 streetName, streetNumber, city));
+
+        // Shopping cart icon
+        Long shopId = cursor.getLong(ShopFragment.COL_SHOP_ID);
+        viewHolder.shoppingCartView.setTag(R.id.shop_id_tag, shopId);
+
+        // Check shopping list product table for this shop
+        if (mShopOnActiveListSet.contains(shopId)) {
+            setShopAsOnActiveList(viewHolder.shoppingCartView);
+        }
+        else {
+            setShopAsOffActiveList(viewHolder.shoppingCartView);
+        }
+
+        setupAddToActiveListClickListener(viewHolder);
+    }
+
+    @Override
+    public Cursor swapCursor(Cursor newCursor) {
+        // Load shop ids which are on the active shopping list
+        mShopOnActiveListSet.clear();
+        if (newCursor != null && newCursor.moveToFirst()) {
+            // Load all shops from cursor
+            Set<Long> shopIdSet = new HashSet<>();
+            do {
+                Long shopId = newCursor.getLong(ShopFragment.COL_SHOP_ID);
+                shopIdSet.add(shopId);
+            } while (newCursor.moveToNext());
+
+            if (!shopIdSet.isEmpty()) {
+                // Build in statement for all shops
+                final String COMMA = "," , QUESTIONMARK = "?";
+                String selection = ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + " IN (";
+                String[] selectionArgs = new String[shopIdSet.size()];
+                int index = 0;
+                for (Long shopId : shopIdSet) {
+                    if (index != 0) selection += COMMA;
+                    selection += QUESTIONMARK;
+                    selectionArgs[index++] = Long.toString(shopId);
+                }
+                selection += ")";
+
+                // Load all unique shop ids from shopping list product
+                Cursor shoppingListProductCursor = null;
+                try {
+                    shoppingListProductCursor = mContext.getContentResolver().query(
+                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
+                            new String[] { ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID },
+                            selection,
+                            selectionArgs,
+                            null);
+                    if (shoppingListProductCursor != null && shoppingListProductCursor.moveToFirst()) {
+                        do {
+                            Long shopId = shoppingListProductCursor.getLong(0);
+                            mShopOnActiveListSet.add(shopId);
+                        } while (shoppingListProductCursor.moveToNext());
+                    }
+                }
+                finally {
+                    if (shoppingListProductCursor != null) shoppingListProductCursor.close();
+                }
+            }
+        }
+
+        return super.swapCursor(newCursor);
+    }
+
+    private void setupAddToActiveListClickListener(ViewHolder viewHolder) {
+        viewHolder.shoppingCartView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Long shopId = (Long) view.getTag(R.id.shop_id_tag);
+                if (shopId == null) return;
+
+                ImageView shoppingCartView = (ImageView) view;
+                if ((int)shoppingCartView.getTag(R.id.drawable_id_tag) == R.drawable.ic_shopping_cart_red_24dp) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, ShoppingContract.ShopEntry.DEFAULT_STORE_ID);
+
+                    // Remove shop from the products where it is registered as shop
+                    int count = mContext.getContentResolver().update(
+                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
+                            contentValues,
+                            ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + "= ?",
+                            new String[]{ Long.toString(shopId) });
+
+                    mShopOnActiveListSet.remove(shopId);
+
+                    setShopAsOffActiveList(shoppingCartView);
+                }
+                else {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, shopId);
+
+                    // Remove shop from the products where it is registered as shop
+                    int count = mContext.getContentResolver().update(
+                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
+                            contentValues,
+                            ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + "= ?",
+                            new String[]{ Long.toString(ShoppingContract.ShopEntry.DEFAULT_STORE_ID) });
+
+                    mShopOnActiveListSet.add(shopId);
+
+                    setShopAsOnActiveList(shoppingCartView);
+                }
+            }
+        });
+    }
+
+    private void setShopAsOffActiveList(ImageView shoppingCartView) {
+        shoppingCartView.setImageResource(R.drawable.ic_shopping_cart_black_24dp);
+        shoppingCartView.setTag(R.id.drawable_id_tag, R.drawable.ic_shopping_cart_black_24dp);
+    }
+
+    private void setShopAsOnActiveList(ImageView shoppingCartView) {
+        shoppingCartView.setImageResource(R.drawable.ic_shopping_cart_red_24dp);
+        shoppingCartView.setTag(R.id.drawable_id_tag, R.drawable.ic_shopping_cart_red_24dp);
     }
 
     /**
