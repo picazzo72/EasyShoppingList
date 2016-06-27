@@ -35,6 +35,7 @@ public class ShoppingContract {
     // The following paths does not match table names
     public static final String PATH_PRODUCT_WITH_CATEGORY = "product_with_category";
     public static final String PATH_PRODUCT_ACTIVE_LIST = "product_active_shoppinglist";
+    public static final String PATH_SHOP_ACTIVE_LIST = "shop_active_shoppinglist";
 
     // To make it easy to query for the exact date, we normalize all dates that go into
     // the database to the start of the the Julian day at UTC.
@@ -171,6 +172,8 @@ public class ShoppingContract {
 
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_SHOP).build();
+        public static final Uri CONTENT_ACTIVE_LIST_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_SHOP_ACTIVE_LIST).build();
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_SHOP;
@@ -292,6 +295,9 @@ public class ShoppingContract {
 
         // Sort order
         public static final String COLUMN_SORT_ORDER = "slp_sort_order";
+
+        // Timestamp
+        public static final String COLUMN_TIMESTAMP = "timestamp";
 
         public static Uri buildShoppingListProductsUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

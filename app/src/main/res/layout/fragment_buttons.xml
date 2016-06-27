@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:baselineAligned="false"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -17,7 +19,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@drawable/ic_shopping_cart_black_36dp" />
+            android:src="@drawable/ic_shopping_cart_black_36dp"
+            android:contentDescription="@string/button_current_list"/>
 
         <TextView
             android:id="@+id/current_list_text"
@@ -25,32 +28,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:text="@string/button_current_list"
-            android:textSize="@dimen/abc_text_size_caption_material"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/shopping_list_group"
-        android:orientation="vertical"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:layout_weight="1">
-
-        <ImageView
-            android:id="@+id/shopping_list_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:scaleType="center"
-            android:src="@drawable/ic_list_black_36dp"/>
-
-        <TextView
-            android:id="@+id/shopping_list_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:text="@string/button_shopping_lists"
-            android:textSize="@dimen/abc_text_size_caption_material"/>
+            android:textSize="@dimen/abc_text_size_caption_material"
+            tools:ignore="PrivateResource"/>
 
     </LinearLayout>
 
@@ -67,7 +46,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@drawable/ic_layers_black_36dp"/>
+            android:src="@drawable/ic_layers_black_36dp"
+            android:contentDescription="@string/button_categories"/>
 
         <TextView
             android:id="@+id/category_text"
@@ -75,7 +55,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:text="@string/button_categories"
-            android:textSize="@dimen/abc_text_size_caption_material"/>
+            android:textSize="@dimen/abc_text_size_caption_material"
+            tools:ignore="PrivateResource"/>
 
     </LinearLayout>
 
@@ -92,7 +73,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@drawable/ic_shop_black_36dp"/>
+            android:src="@drawable/ic_shop_black_36dp"
+            android:contentDescription="@string/button_products"/>
 
         <TextView
             android:id="@+id/product_text"
@@ -100,7 +82,9 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:text="@string/button_products"
-            android:textSize="@dimen/abc_text_size_caption_material"/>
+            android:textSize="@dimen/abc_text_size_caption_material"
+            android:contentDescription="@string/button_products"
+            tools:ignore="PrivateResource"/>
 
     </LinearLayout>
 
@@ -117,7 +101,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="center"
-            android:src="@drawable/ic_store_black_36dp"/>
+            android:src="@drawable/ic_store_black_36dp"
+            android:contentDescription="@string/button_shop"/>
 
         <TextView
             android:id="@+id/shop_text"
@@ -125,7 +110,37 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:text="@string/button_shop"
-            android:textSize="@dimen/abc_text_size_caption_material"/>
+            android:textSize="@dimen/abc_text_size_caption_material"
+            android:contentDescription="@string/button_shop"
+            tools:ignore="PrivateResource"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/shopping_list_group"
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:layout_weight="1">
+
+        <ImageView
+            android:id="@+id/shopping_list_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="center"
+            android:src="@drawable/ic_list_black_36dp"
+            android:contentDescription="@string/button_shopping_lists"/>
+
+        <TextView
+            android:id="@+id/shopping_list_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/button_shopping_lists"
+            android:textSize="@dimen/abc_text_size_caption_material"
+            android:contentDescription="@string/button_shopping_lists"
+            tools:ignore="PrivateResource"/>
 
     </LinearLayout>
 

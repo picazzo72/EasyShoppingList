@@ -4,6 +4,7 @@ import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.support.v4.util.Pair;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.widget.RecyclerView;
@@ -14,13 +15,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.dandersen.app.easyshoppinglist.data.ActiveListUtil;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.ui.ItemTouchHelperAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,6 +41,7 @@ public class ActiveListAdapter extends RecyclerView.Adapter
     private Context mContext;
     private CursorAdapter mCursorAdapter;
 
+    // Map with key = position in the list, value = Pair of shop id and name
     private class ShopPositionMap extends HashMap<Integer, Pair<Long, String> > {  }
 
     private ShopPositionMap mShopPositionMap = new ShopPositionMap();
@@ -202,9 +204,45 @@ public class ActiveListAdapter extends RecyclerView.Adapter
                         mShopPositionMap.put(index, Pair.create(shopId, shopName));
                         ++index;
                     }
+                    ++index;
                 }
-                ++index;
             } while (cursor.moveToNext());
+
+            // Fetch shops that does not have any products and add them to the map
+            updateWithShopsWithoutProducts(index);
+        }
+    }
+
+    private void updateWithShopsWithoutProducts(int index) {
+        Uri uri = ShoppingContract.ShopEntry.CONTENT_ACTIVE_LIST_URI;
+        String[] projection = new String[] {
+                ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID ,
+                ShoppingContract.ShopEntry.COLUMN_NAME };
+        String sortOrder = ShoppingContract.ShopEntry.COLUMN_NAME;
+        Cursor cursor = null;
+        try {
+            cursor = mContext.getContentResolver().query(uri,
+                    projection,
+                    null,
+                    null,
+                    sortOrder);
+            if (cursor != null && cursor.moveToFirst()) {
+                Set<Long> shopIds = new HashSet<>();
+                do {
+                    Long shopId = cursor.getLong(0);
+                    if (shopId != ShoppingContract.ShopEntry.DEFAULT_STORE_ID) {
+                        if (!shopIds.contains(shopId)) {
+                            shopIds.add(shopId);
+                            String shopName = cursor.getString(1);
+                            mShopPositionMap.put(index, Pair.create(shopId, shopName));
+                            ++index;
+                        }
+                    }
+                } while (cursor.moveToNext());
+            }
+        }
+        finally {
+            if (cursor != null) cursor.close();
         }
     }
 
@@ -268,7 +306,7 @@ public class ActiveListAdapter extends RecyclerView.Adapter
     private void addUpdateOperation(ArrayList<ContentProviderOperation> ops, int position, int order) {
         Cursor cursor = mCursorAdapter.getCursor();
         cursor.moveToPosition(position);
-        int id = cursor.getInt(ActiveListFragment.COL_SHOPPING_LIST_PRODUCTS_ID);
+        int id = cursor.getInt(ActiveListFragment.COL_SHOPPING_LIST_PRODUCT_ID);
         ops.add(ContentProviderOperation.newUpdate(ShoppingContract.ShoppingListProductEntry.CONTENT_URI)
                 .withSelection(ShoppingContract.ShoppingListProductEntry._ID + " = ?",
                         new String[]{Integer.toString(id)})
@@ -278,15 +316,19 @@ public class ActiveListAdapter extends RecyclerView.Adapter
 
     @Override
     public void onItemDismiss(int position) {
-        Cursor cursor = mCursorAdapter.getCursor();
-        cursor.moveToPosition(position);
-        int id = cursor.getInt(ActiveListFragment.COL_SHOPPING_LIST_PRODUCTS_ID);
+        Pair<Long, String> shopIdName = mShopPositionMap.get(position);
+        if (shopIdName == null) {
+            Cursor cursor = mCursorAdapter.getCursor();
+            cursor.moveToPosition(getRealPosition(position));
+            Long shoppingListProductId = cursor.getLong(ActiveListFragment.COL_SHOPPING_LIST_PRODUCT_ID);
 
-        mContext.getContentResolver().delete(
-                ShoppingContract.ShoppingListProductEntry.buildShoppingListProductsUri(id),
-                null,
-                null
-        );
+            // Delete product from active list
+            ActiveListUtil.removeProduct(mContext, shoppingListProductId);
+        }
+        else {
+            // Remove shop from active list
+            ActiveListUtil.removeShop(mContext, shopIdName.first);
+        }
 
         notifyItemRemoved(position);
     }

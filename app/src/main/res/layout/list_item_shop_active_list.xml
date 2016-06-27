@@ -6,6 +6,8 @@
     android:layout_height="wrap_content"
     android:background="@color/colorDarkGray"
     android:padding="@dimen/detail_item_horizonal_padding"
+    android:layout_marginTop="1dp"
+    android:layout_marginBottom="1dp"
     android:gravity="center_vertical">
 
     <ImageView

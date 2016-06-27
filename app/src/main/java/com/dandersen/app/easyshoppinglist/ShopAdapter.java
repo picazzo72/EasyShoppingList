@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.dandersen.app.easyshoppinglist.data.ActiveListUtil;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
 import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 import com.dandersen.app.easyshoppinglist.utils.StringUtil;
@@ -183,30 +184,14 @@ public class ShopAdapter extends ActionModeCursorAdapter {
 
                 ImageView shoppingCartView = (ImageView) view;
                 if ((int)shoppingCartView.getTag(R.id.drawable_id_tag) == R.drawable.ic_shopping_cart_red_24dp) {
-                    ContentValues contentValues = new ContentValues();
-                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, ShoppingContract.ShopEntry.DEFAULT_STORE_ID);
-
-                    // Remove shop from the products where it is registered as shop
-                    int count = mContext.getContentResolver().update(
-                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
-                            contentValues,
-                            ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + "= ?",
-                            new String[]{ Long.toString(shopId) });
+                    ActiveListUtil.removeShop(mContext, shopId);
 
                     mShopOnActiveListSet.remove(shopId);
 
                     setShopAsOffActiveList(shoppingCartView);
                 }
                 else {
-                    ContentValues contentValues = new ContentValues();
-                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, shopId);
-
-                    // Remove shop from the products where it is registered as shop
-                    int count = mContext.getContentResolver().update(
-                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
-                            contentValues,
-                            ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + "= ?",
-                            new String[]{ Long.toString(ShoppingContract.ShopEntry.DEFAULT_STORE_ID) });
+                    ActiveListUtil.addShop(mContext, shopId);
 
                     mShopOnActiveListSet.add(shopId);
 

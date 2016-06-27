@@ -36,6 +36,7 @@ public class ShoppingProvider extends ContentProvider {
     static final int SHOPPING_LIST_ITEM = 301;          // Shopping list item
     static final int SHOP = 400;                        // Shop list
     static final int SHOP_ITEM = 401;                   // Shop entry item
+    static final int SHOP_ACTIVE_LIST = 403;            // Shops for currently active shopping list
     static final int SHOPPING_LIST_PRODUCT = 500;       // Shopping list/products/shop rel list
     static final int SHOPPING_LIST_PRODUCT_ITEM = 501;  // Shopping list/products/shop rel item
     static final int SHOP_CATEGORY = 600;               // Shop category
@@ -89,17 +90,17 @@ public class ShoppingProvider extends ContentProvider {
     static{
         sActiveListQueryBuilder = new SQLiteQueryBuilder();
 
-        //product INNER JOIN shoppinglistproducts ON product.id = shoppinglistproducts.product_id
+        //shoppinglistproducts INNER JOIN product ON shoppinglistproducts.product_id = product.id
         //        INNER JOIN shop ON shop.id = shoppinglistproducts.shop_id
         //        INNER JOIN category on category.id = product.id
         //        INNER JOIN shoppinglist on shoppinglist.id = shoppinglistproducts.shopping_list_id
         sActiveListQueryBuilder.setTables(
         ShoppingContract.ShoppingListProductEntry.TABLE_NAME + " INNER JOIN " +
                 ShoppingContract.ProductEntry.TABLE_NAME +
-                " ON " + ShoppingContract.ProductEntry.TABLE_NAME +
-                "." + ShoppingContract.ProductEntry._ID +
-                " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                " ON " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
                 "." + ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID +
+                " = " + ShoppingContract.ProductEntry.TABLE_NAME +
+                "." + ShoppingContract.ProductEntry._ID +
 
                 " INNER JOIN " + ShoppingContract.ShopEntry.TABLE_NAME +
                 " ON " + ShoppingContract.ShopEntry.TABLE_NAME +
@@ -128,6 +129,28 @@ public class ShoppingProvider extends ContentProvider {
                 "." + ShoppingContract.ShoppingListEntry._ID +
                 " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
                 "." + ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID);
+    }
+
+    private static final SQLiteQueryBuilder sActiveShopListQueryBuilder;
+
+    static{
+        sActiveShopListQueryBuilder = new SQLiteQueryBuilder();
+
+        //shoppinglistproducts INNER JOIN shop ON shop.id = shoppinglistproducts.shop_id
+        //        INNER JOIN shoppinglist on shoppinglist.id = shoppinglistproducts.shopping_list_id
+        sActiveShopListQueryBuilder.setTables(
+                ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                        " INNER JOIN " + ShoppingContract.ShopEntry.TABLE_NAME +
+                        " ON " + ShoppingContract.ShopEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShopEntry._ID +
+                        " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID +
+
+                        " INNER JOIN " + ShoppingContract.ShoppingListEntry.TABLE_NAME +
+                        " ON " + ShoppingContract.ShoppingListEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShoppingListEntry._ID +
+                        " = " + ShoppingContract.ShoppingListProductEntry.TABLE_NAME +
+                        "." + ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID);
     }
 
     //category.name = ?
@@ -159,6 +182,8 @@ public class ShoppingProvider extends ContentProvider {
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOP, SHOP);
         matcher.addURI(authority, ShoppingContract.PATH_SHOP + "/*", SHOP_ITEM);
+
+        matcher.addURI(authority, ShoppingContract.PATH_SHOP_ACTIVE_LIST, SHOP_ACTIVE_LIST);
 
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCT, SHOPPING_LIST_PRODUCT);
         matcher.addURI(authority, ShoppingContract.PATH_SHOPPING_LIST_PRODUCT + "/*", SHOPPING_LIST_PRODUCT_ITEM);
@@ -214,6 +239,8 @@ public class ShoppingProvider extends ContentProvider {
             case SHOPPING_LIST:
                 return ShoppingContract.ShoppingListEntry.CONTENT_TYPE;
             case SHOP:
+                return ShoppingContract.ShopEntry.CONTENT_TYPE;
+            case SHOP_ACTIVE_LIST:
                 return ShoppingContract.ShopEntry.CONTENT_TYPE;
             case SHOPPING_LIST_PRODUCT:
                 return ShoppingContract.ShoppingListProductEntry.CONTENT_TYPE;
@@ -403,6 +430,33 @@ public class ShoppingProvider extends ContentProvider {
         );
     }
 
+    private Cursor getShopActiveList(String[] projection, String sortOrder) {
+        String selection = ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID +
+                " IS NULL AND " + ShoppingContract.ShopEntry.TABLE_NAME + "." +
+                ShoppingContract.ShopEntry._ID + " != ?";
+        String[] selectionArgs = new String[] { Long.toString(ShoppingContract.ShopEntry.DEFAULT_STORE_ID) };
+
+        Log.i(LOG_TAG, "DSA LOG - Shop active list");
+        Log.i(LOG_TAG, "DSA LOG - '" + sActiveShopListQueryBuilder.getTables() + "' - '" +
+                selection + "' - " + stringArrayToString(selectionArgs));
+
+        Cursor cursor = sActiveShopListQueryBuilder.query(
+                mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+
+        if (cursor != null) {
+            Log.i(LOG_TAG, "DSA LOG - Active shops count: " + cursor.getCount());
+        }
+
+        return cursor;
+    }
+
     private Cursor getShoppingListEntry(Uri uri, String[] projection) {
         String shoppingListIdFromUri = ShoppingContract.ShopEntry.getShopIdFromUri(uri);
 
@@ -556,6 +610,12 @@ public class ShoppingProvider extends ContentProvider {
             case SHOP_ITEM:
             {
                 retCursor = getShopEntry(uri, projection);
+                break;
+            }
+            // "shop_active_list"
+            case SHOP_ACTIVE_LIST:
+            {
+                retCursor = getShopActiveList(projection, sortOrder);
                 break;
             }
             // "shop_category"

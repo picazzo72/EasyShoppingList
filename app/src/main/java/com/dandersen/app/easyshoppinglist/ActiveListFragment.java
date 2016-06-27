@@ -15,8 +15,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.dandersen.app.easyshoppinglist.data.ActiveListUtil;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
-import com.dandersen.app.easyshoppinglist.data.Utilities;
 import com.dandersen.app.easyshoppinglist.ui.SimpleItemTouchHelperCallback;
 
 /**
@@ -55,7 +55,7 @@ public class ActiveListFragment extends Fragment
     };
 
     // These indices are tied to ACTIVE_LIST_COLUMNS
-    static final int COL_SHOPPING_LIST_PRODUCTS_ID  = 0;
+    static final int COL_SHOPPING_LIST_PRODUCT_ID   = 0;
     static final int COL_SHOP_ID                    = 1;
     static final int COL_SHOP_NAME                  = 2;
     static final int COL_CATEGORY_ID                = 3;
@@ -71,7 +71,7 @@ public class ActiveListFragment extends Fragment
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Uri uri = ShoppingContract.ProductEntry.CONTENT_ACTIVE_LIST_URI;
 
-        Long activeListId = Utilities.getActiveShoppingListId(getActivity());
+        Long activeListId = ActiveListUtil.getActiveShoppingListId(getActivity());
         if (activeListId == null) return null;
 
         String selection = ShoppingContract.ShoppingListProductEntry.TABLE_NAME + "." +
@@ -111,11 +111,19 @@ public class ActiveListFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_active_list, container, false);
+        final ActiveListFragment thisPtr = this;
 
         // The CursorAdapter will take data from a source and
         // use it to populate the ListView it's attached to
         mActiveListAdapter = new ActiveListAdapter(getActivity(), null, 0);
         mActiveListAdapter.setTwoPaneLayout(mTwoPaneLayout);
+        mActiveListAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                super.onItemRangeRemoved(positionStart, itemCount);
+                getLoaderManager().initLoader(CURSOR_LOADER_ID, null, thisPtr).forceLoad();
+            }
+        });
 
         // Get a reference to the RecyclerView, and attach this adapter to it
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.listview_active_list);

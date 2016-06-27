@@ -75,7 +75,8 @@
     // New shopping list
     <string name="new_shopping_list_name">New shopping list</string>
 
-    // Default shop name
+    // Default values
     <string name="default_shop_name">Any shop</string>
+    <string name="default_product_name">Any product</string>
 
 </resources>

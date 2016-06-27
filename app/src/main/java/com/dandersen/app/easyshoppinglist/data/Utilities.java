@@ -1,11 +1,8 @@
 package com.dandersen.app.easyshoppinglist.data;
 
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import android.util.Log;
 
 import com.dandersen.app.easyshoppinglist.R;
@@ -179,37 +176,5 @@ public class Utilities {
         if (!db.isOpen()) throw new AssertionError("Database is not open");
 
         populateDatabase(context, db);
-    }
-
-    public static Long getActiveShoppingListId(Context context) {
-        final String DESC = " DESC";
-
-        String sortOrder = ShoppingContract.ShoppingListEntry.COLUMN_CREATED + DESC;
-
-        Cursor c = null;
-        try {
-            c = context.getContentResolver().query(
-                    ShoppingContract.ShoppingListEntry.CONTENT_URI,
-                    new String[]{ ShoppingContract.ShoppingListEntry._ID },
-                    null,           // cols for "where" clause
-                    null,           // values for "where" clause
-                    sortOrder       // sort order
-            );
-            if (c == null) return null;
-            if (c.moveToFirst()) {
-                return c.getLong(0);
-            }
-
-            // No shopping list, so we create one
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(ShoppingContract.ShoppingListEntry.COLUMN_NAME, context.getString(R.string.new_shopping_list_name));
-
-            // Insert product
-            Uri insertUri = context.getContentResolver().insert(ShoppingContract.ShoppingListEntry.CONTENT_URI, contentValues);
-            return ContentUris.parseId(insertUri);
-        }
-        finally {
-            if (c != null) c.close();
-        }
     }
 }

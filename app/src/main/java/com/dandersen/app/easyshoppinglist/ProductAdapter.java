@@ -4,14 +4,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.dandersen.app.easyshoppinglist.data.ActiveListUtil;
 import com.dandersen.app.easyshoppinglist.data.ShoppingContract;
-import com.dandersen.app.easyshoppinglist.data.Utilities;
 import com.dandersen.app.easyshoppinglist.ui.ActionModeCursorAdapter;
 
 /**
@@ -109,31 +110,46 @@ public class ProductAdapter extends ActionModeCursorAdapter {
             public void onClick(View view) {
                 ImageView shoppingCartView = (ImageView) view;
                 if ((int)shoppingCartView.getTag(R.id.drawable_id_tag) == R.drawable.ic_shopping_cart_red_24dp) {
-                    Object object = shoppingCartView.getTag(R.id.shopping_list_product_id_tag);
-                    if (object == null) return;
-                    Long shoppingListProductId = (Long) object;
+                    Long shoppingListProductId = (Long) shoppingCartView.getTag(R.id.shopping_list_product_id_tag);
+
                     // Delete product from active list
-                    mContext.getContentResolver().delete(
-                            ShoppingContract.ShoppingListProductEntry.
-                                    buildShoppingListProductsUri(shoppingListProductId),
-                            null,
-                            null);
+                    ActiveListUtil.removeProduct(mContext, shoppingListProductId);
 
                     setProductAsOffActiveList(shoppingCartView);
                 }
                 else {
                     Long productId = (Long) view.getTag(R.id.product_id_tag);
-                    Long activeShoppingListId = Utilities.getActiveShoppingListId(mContext);
+                    Long activeShoppingListId = ActiveListUtil.getActiveShoppingListId(mContext);
                     if (activeShoppingListId == null) return;
+
+                    // Determine shop id
+                    Long shopId = ShoppingContract.ShopEntry.DEFAULT_STORE_ID;
+                    Pair<Long, Long> shopIdPair = ActiveListUtil.getLastUsedShopId(mContext);
+                    if (shopIdPair != null) {
+                        shopId = shopIdPair.first;
+                    }
 
                     ContentValues contentValues = new ContentValues();
                     contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_PRODUCT_ID, productId);
                     contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOPPING_LIST_ID, activeShoppingListId);
-                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, ShoppingContract.ShopEntry.DEFAULT_STORE_ID);
+                    contentValues.put(ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID, shopId);
 
-                    // Insert shopping list product entry
-                    Uri insertUri = mContext.getContentResolver().insert(
-                            ShoppingContract.ShoppingListProductEntry.CONTENT_URI, contentValues);
+                    if (shopIdPair == null || shopIdPair.second == null) {
+                        // Insert shopping list product entry
+                        Uri insertUri = mContext.getContentResolver().insert(
+                                ShoppingContract.ShoppingListProductEntry.CONTENT_URI, contentValues);
+                        String shoppingListProductId = ShoppingContract.ShoppingListProductEntry.getShoppingListProductIdFromUri(insertUri);
+                        view.setTag(R.id.shopping_list_product_id_tag, Long.valueOf(shoppingListProductId));
+                    }
+                    else {
+                        // Update shop entry with the product
+                        mContext.getContentResolver().update(
+                                ShoppingContract.ShoppingListProductEntry.CONTENT_URI,
+                                contentValues,
+                                ShoppingContract.ShoppingListProductEntry.COLUMN_SHOP_ID + "= ?",
+                                new String[] { Long.toString(shopId)});
+                        view.setTag(R.id.shopping_list_product_id_tag, shopIdPair.second);
+                    }
 
                     setProductAsOnActiveList(shoppingCartView);
                 }
